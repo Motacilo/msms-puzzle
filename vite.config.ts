@@ -1,6 +1,9 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 
-export default defineConfig({
+const pagesBase = "/msms-puzzle/";
+
+export default defineConfig(({ command }) => ({
+  base: command === "build" ? pagesBase : "/",
   plugins: [react()],
-});
+}));
