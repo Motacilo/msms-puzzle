@@ -23,6 +23,11 @@ export const aminoAcids: AminoAcid[] = [
   { code: "W", nameJa: "トリプトファン", residueMass: 186 },
 ];
 
+/** 質量の小さい順。同じ質量では表記のアルファベット順。 */
+export const aminoAcidCodesByMass = [...aminoAcids]
+  .sort((left, right) => left.residueMass - right.residueMass || left.code.localeCompare(right.code))
+  .map((acid) => acid.code);
+
 /** 序盤の組み合わせ問題は、この5種類だけを配る。 */
 const earlyCodes = ["G", "A", "S", "P", "V"];
 

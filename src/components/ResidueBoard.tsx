@@ -1,6 +1,7 @@
 import { Fragment, useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import { AminoAcidCard } from "./AminoAcidCard.tsx";
-import { acidByCode, residueLabel } from "../game/labels.ts";
+import { residueLabel } from "../game/labels.ts";
+import { trayCards } from "../game/tray.ts";
 import type { AminoAcid } from "../game/types.ts";
 
 type Selection = { kind: "slot"; index: number } | { kind: "acid"; key: string; code: string };
@@ -37,6 +38,8 @@ type Props = {
   hydroxyl: boolean;
   onHydrogen?: () => void;
   onHydroxyl?: () => void;
+  /** ペプチドの横にゴミ箱を置く。2回続けて押すと、入れたアミノ酸をすべて消す。 */
+  clearable?: boolean;
   onCodesChange: (codes: string[]) => void;
 };
 
@@ -54,13 +57,14 @@ export function ResidueBoard({
   hydroxyl,
   onHydrogen,
   onHydroxyl,
+  clearable = false,
   onCodesChange,
 }: Props) {
   const dealKey = deal.join("|");
   const cards = useMemo(() => {
     const codes = dealKey ? dealKey.split("|") : [];
-    return codes.map((code, index) => ({ key: `${index}:${code}`, code }));
-  }, [dealKey]);
+    return trayCards(codes, acids);
+  }, [acids, dealKey]);
   const [slots, setSlots] = useState<(string | null)[]>(() =>
     createSlots(initialCodes, initialSlotCount, maxSlots),
   );
@@ -68,6 +72,8 @@ export function ResidueBoard({
   const [prompt, setPrompt] = useState<number | null>(null);
   const [drag, setDrag] = useState<DragView | null>(null);
   const rootRef = useRef<HTMLDivElement>(null);
+  const trashRef = useRef<HTMLButtonElement>(null);
+  const [trashArmed, setTrashArmed] = useState(false);
   const slotsRef = useRef(slots);
   const gesture = useRef<Gesture | null>(null);
   const ignoreClick = useRef(false);
@@ -95,6 +101,22 @@ export function ResidueBoard({
       if (current) window.clearTimeout(current.timer);
     };
   }, []);
+
+  // ゴミ箱は1回目で待機し、続けてもう1回押したときだけ消す。ほかを触るか、時間が過ぎたら待機を解く。
+  useEffect(() => {
+    if (!trashArmed) return;
+    const timer = window.setTimeout(() => setTrashArmed(false), 3000);
+    function onPointerDown(event: PointerEvent) {
+      const target = event.target;
+      if (target instanceof Node && trashRef.current?.contains(target)) return;
+      setTrashArmed(false);
+    }
+    document.addEventListener("pointerdown", onPointerDown);
+    return () => {
+      window.clearTimeout(timer);
+      document.removeEventListener("pointerdown", onPointerDown);
+    };
+  }, [trashArmed]);
 
   useEffect(() => {
     if (prompt === null) {
@@ -317,6 +339,20 @@ export function ResidueBoard({
     commit(slots.filter((_, item) => item !== index));
   }
 
+  const hasCodes = slots.some((code) => code !== null);
+
+  function onTrash() {
+    if (!hasCodes) return;
+    setPrompt(null);
+    if (!trashArmed) {
+      setTrashArmed(true);
+      return;
+    }
+    setTrashArmed(false);
+    setSelection(null);
+    commit(slots.map(() => null));
+  }
+
   const highlighted = selection?.kind === "slot" ? selection.index : null;
   const full = slots.length >= maxSlots;
 
@@ -344,15 +380,32 @@ export function ResidueBoard({
         <Join flush={slots.length > 0 && highlighted === slots.length - 1} />
         <Cap label="OH" active={hydroxyl} oh onClick={onHydroxyl} />
         <AddButton label="右に枠を足す" side="right" disabled={full} onClick={addRight} />
+        {clearable ? (
+          <button
+            ref={trashRef}
+            type="button"
+            className={trashArmed ? "slot-trash is-armed" : "slot-trash"}
+            aria-disabled={!hasCodes}
+            aria-label={
+              trashArmed
+                ? "もう一度押すと、入れたアミノ酸をすべて消します"
+                : "入れたアミノ酸をすべて消す（2回続けて押します）"
+            }
+            onClick={onTrash}
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M4 7h16M9.5 7V4.5h5V7M6.5 7l1 12.5h9l1-12.5M10 11v5.5M14 11v5.5" />
+            </svg>
+            {trashArmed ? <span className="slot-trash-hint">もう一度</span> : null}
+          </button>
+        ) : null}
       </div>
       <div className="tray" aria-label="使えるカード">
         {cards.map((card) => {
-          const acid = acidByCode(card.code, acids);
-          if (!acid) return null;
           return (
             <AminoAcidCard
               key={card.key}
-              acid={acid}
+              acid={card.acid}
               acidKey={card.key}
               pressed={selection?.kind === "acid" && selection.key === card.key}
               dropOver={drag?.over?.kind === "acid" && drag.over.key === card.key}

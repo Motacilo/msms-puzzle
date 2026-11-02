@@ -1,5 +1,5 @@
 import { CANNOT_BUILD, type Problem } from "../game/types.ts";
-import { earlyChoices } from "./aminoAcids.ts";
+import { aminoAcidCodesByMass, earlyChoices } from "./aminoAcids.ts";
 
 /** 新しい残基は、それまでの候補を消さずに後ろへ足す。 */
 const paletteGasv = ["G", "A", "S", "P", "V"];
@@ -8,7 +8,10 @@ const paletteHmw = [...paletteFry, "H", "M", "W"];
 const paletteCey = [...paletteHmw, "C", "E"];
 const paletteGat = [...paletteCey, "T"];
 const paletteSna = [...paletteGat, "N", "D"];
-const paletteGak = [...paletteSna, "K"];
+/** 短い進行で、それまでに出した残基へ新しいものを足す。 */
+const paletteRead = [...paletteGasv, "H", "M", "W"];
+const paletteSampleK = [...paletteRead, "K"];
+const paletteSampleFr = [...paletteSampleK, "F", "R"];
 
 export const problems: Problem[] = [
   {
@@ -71,7 +74,7 @@ export const problems: Problem[] = [
   },
   {
     id: "left-end",
-    stageId: "stage-difference",
+    stageId: "stage-shelf",
     type: "choice",
     title: "左端を読む",
     instruction:
@@ -89,7 +92,7 @@ export const problems: Problem[] = [
   },
   {
     id: "right-end",
-    stageId: "stage-difference",
+    stageId: "stage-shelf",
     type: "choice",
     title: "右端を読む",
     instruction:
@@ -109,12 +112,26 @@ export const problems: Problem[] = [
   },
   {
     id: "assemble-gas",
-    stageId: "stage-order",
+    stageId: "stage-read",
     type: "sequence-builder",
     title: "同じペプチドを並べる",
     instruction:
-      "質量の差の3問は、同じペプチドのかけらでした。左端から順に、カードを1枚ずつ使って並べてください。",
+      "矢印の説明に沿って、3残基を並べてください。同じアミノ酸は、ボタンを繰り返し使えます。",
     sequence: "GAS",
+    guide: [
+      {
+        peakId: "left-1",
+        text: "58は、グリシン（57）に1を足した値です。グリシンは左端にあると考えられます。",
+      },
+      {
+        peakId: "right-1",
+        text: "106は、セリン（87）に19を足した値です。セリンは右端にあると考えられます。",
+      },
+      {
+        peakId: "intact",
+        text: "いちばん右の重いピーク234は、残基をすべて足して19を足した値です。234 − 19 − 57 − 87 = 71なので、真ん中はアラニンです。",
+      },
+    ],
     shownPeakIds: ["intact", "left-1", "left-2", "right-1", "right-2"],
     focusPeakIds: ["left-1", "left-2", "right-1"],
     peakLabelStyle: "depth",
@@ -128,11 +145,11 @@ export const problems: Problem[] = [
   },
   {
     id: "restore-asg",
-    stageId: "stage-order",
+    stageId: "stage-read",
     type: "sequence-builder",
-    title: "別のペプチド",
+    title: "順番が違う",
     instruction:
-      "切る前の質量が同じでも、順番が違うとかけらの質量は変わります。左端と右端から読んで、残りを真ん中に置いてください。",
+      "グリシン、アラニン、セリンの順番が違うペプチドです。説明なしで、左端と右端から読んで、残りを真ん中に置いてください。",
     sequence: "ASG",
     shownPeakIds: ["intact", "left-1", "left-2", "right-1", "right-2"],
     focusPeakIds: ["left-1", "right-1"],
@@ -276,19 +293,18 @@ export const problems: Problem[] = [
   },
   {
     id: "seq-hmw",
-    stageId: "stage-residues",
+    stageId: "stage-read",
     type: "sequence-builder",
     title: "もう一組",
     instruction:
-      "やり方は前の問題と同じです。H は 137、M は 131、W は 186 です。同じアミノ酸が2回入ることがあります。配られたものは、全部は使いません。",
+      "アミノ酸はすべて並んでいます。同じ質量のものは1つのボタンです。同じアミノ酸が2回入ることがあります。全部は使いません。",
     sequence: "WHW",
     shownPeakIds: ["intact", "left-1", "left-2", "right-1", "right-2"],
     focusPeakIds: ["left-1", "right-1"],
     peakLabelStyle: "depth",
-    availableAminoAcids: paletteHmw,
+    availableAminoAcids: aminoAcidCodesByMass,
     correctSequence: "WHW",
-    explanation:
-      "左端はトリプトファン、次はヒスチジン、右端もトリプトファンです。M はこのペプチドには入りません。",
+    explanation: "左端はトリプトファン、次はヒスチジン、右端もトリプトファンです。",
     hint: "短い左のかけらから1、短い右のかけらから19を引いてください。",
   },
   {
@@ -358,269 +374,34 @@ export const problems: Problem[] = [
   },
   {
     id: "seq-gak",
-    stageId: "stage-protein",
+    stageId: "stage-shelf",
     type: "sequence-builder",
     title: "Kは128",
     instruction:
-      "新しい残基 K は 128 です。左端は質量から1、右端は質量から19を引いて、3残基を並べてください。",
+      "新しい残基 K は 128 です。左端は質量から1、右端は質量から19を引いて、3残基を並べてください。配られたものは全部は使いません。",
     sequence: "GAK",
     shownPeakIds: ["intact", "left-1", "left-2", "right-1", "right-2"],
     focusPeakIds: ["right-1"],
     peakLabelStyle: "depth",
-    availableAminoAcids: paletteGak,
+    availableAminoAcids: paletteSampleK,
     correctSequence: "GAK",
     explanation: "左端はグリシン、次はアラニン、右端は128でリジンです。",
     hint: "右端の短いかけらから19を引いてください。",
   },
   {
     id: "seq-gfr",
-    stageId: "stage-protein",
+    stageId: "stage-shelf",
     type: "sequence-builder",
     title: "もう1本のペプチド",
     instruction:
-      "別のペプチドです。F は 147、R は 156 です。端の引き算で並べてください。",
+      "別のペプチドです。F は 147、R は 156 です。端の引き算で並べてください。配られたものは全部は使いません。",
     sequence: "GFR",
     shownPeakIds: ["intact", "left-1", "left-2", "right-1", "right-2"],
     focusPeakIds: ["left-1", "right-1"],
     peakLabelStyle: "depth",
-    availableAminoAcids: paletteGak,
+    availableAminoAcids: paletteSampleFr,
     correctSequence: "GFR",
     explanation: "左端はグリシン、次はフェニルアラニン、右端はアルギニンです。",
     hint: "短い左のかけらから1、短い右のかけらから19を引いてください。",
-  },
-  {
-    id: "protein-one",
-    stageId: "stage-protein",
-    type: "protein",
-    title: "1本では絞れない",
-    instruction:
-      "このピークは257です。残基の合計に1を足した質量なので、N末端側のかけらです。257 − 1 = 256で、G・A・Kです。N末端がこの並びの候補をすべて選んでください。1本では、それ以上は絞れません。",
-    sequence: "GAK",
-    shownPeakIds: ["intact"],
-    focusPeakIds: ["intact"],
-    peakLabelStyle: "side",
-    candidates: [
-      { id: "aka", name: "アカ", sequence: "GAKGFR" },
-      { id: "ao", name: "アオ", sequence: "GAKGMH" },
-      { id: "kii", name: "キイ", sequence: "MHWGAK" },
-    ],
-    peptides: [["G", "A", "K"]],
-    peptideEnds: ["n"],
-    observedMasses: [257],
-    correctCandidateIds: ["aka", "ao"],
-    resolveCutEnds: false,
-    explanation:
-      "257 − 1 = 256なので、N末端側の GAK です。アカとアオはどちらもN末端が GAK です。キイの GAK はC末端側で、その質量は 256 + 19 = 275 になります。257には合いません。この1本ではアカとアオを分けられません。",
-    hint: "19を足した質量ならC末端側です。257は1を足しています。",
-  },
-  {
-    id: "protein-two",
-    stageId: "stage-protein",
-    type: "protein",
-    title: "もう1本で決まる",
-    instruction:
-      "N末端側の257（GAK）に加えて、379（GFR）も読めました。両方のピークが出ています。2本とも合う候補だけを選んでください。",
-    sequence: "GFR",
-    shownPeakIds: ["intact"],
-    focusPeakIds: ["intact"],
-    peakLabelStyle: "side",
-    candidates: [
-      { id: "aka", name: "アカ", sequence: "GAKGFR" },
-      { id: "ao", name: "アオ", sequence: "GAKGMH" },
-      { id: "kii", name: "キイ", sequence: "MHWGAK" },
-    ],
-    peptides: [
-      ["G", "A", "K"],
-      ["G", "F", "R"],
-    ],
-    peptideEnds: ["n"],
-    observedMasses: [257, 379],
-    correctCandidateIds: ["aka"],
-    resolveCutEnds: false,
-    explanation:
-      "N末端側の GAK（257）に合うのはアカとアオです。GFR（379）を含むのはアカだけなので、タンパク質はアカに決まります。",
-  },
-  {
-    id: "isobar-open",
-    stageId: "stage-isobar",
-    type: "protein",
-    title: "113はIでもLでもよい",
-    instruction:
-      "質量113は、イソロイシンでもロイシンでも同じです。読めたペプチドは G(I/L)S と書きます。この質量で合う候補をすべて選んでください。どちらに決まらなくても、候補は絞れます。",
-    sequence: "GIS",
-    shownPeakIds: ["intact", "left-1", "left-2", "right-1"],
-    focusPeakIds: ["left-2"],
-    peakLabelStyle: "side",
-    candidates: [
-      { id: "aka", name: "アカ", sequence: "GISGFR" },
-      { id: "ao", name: "アオ", sequence: "GLSGMH" },
-      { id: "kii", name: "キイ", sequence: "GVSGFR" },
-    ],
-    peptides: [["G", ["I", "L"], "S"]],
-    correctCandidateIds: ["aka", "ao"],
-    resolveCutEnds: false,
-    explanation:
-      "113は I でも L でもピークは同じです。アカの I も、アオの L も一致します。キイの V は99なので残しません。タンパク質はまだ2つです。",
-    scienceNote:
-      "イソロイシンとロイシンは組成が同じなので、質量を細かくしてもこの差は分かれません。",
-  },
-  {
-    id: "isobar-narrow",
-    stageId: "stage-isobar",
-    type: "protein",
-    title: "同じ質量のままで決まる",
-    instruction:
-      "G(I/L)S に加えて GFR も読めました。両方のピークが出ています。113が I か L か決まっていなくても、2本とも含む候補を選んでください。",
-    sequence: "GIS",
-    shownPeakIds: ["intact"],
-    focusPeakIds: ["intact"],
-    peakLabelStyle: "side",
-    candidates: [
-      { id: "aka", name: "アカ", sequence: "GISGFR" },
-      { id: "ao", name: "アオ", sequence: "GLSGMH" },
-      { id: "kii", name: "キイ", sequence: "GVSGFR" },
-    ],
-    peptides: [
-      ["G", ["I", "L"], "S"],
-      ["G", "F", "R"],
-    ],
-    observedMasses: [276, 379],
-    correctCandidateIds: ["aka"],
-    resolveCutEnds: false,
-    explanation:
-      "G(I/L)S はアカとアオに合います。GFR を含むのはアカだけです。未決定の113が残ったまま、タンパク質はアカに決まります。",
-  },
-  {
-    id: "isobar-kq",
-    stageId: "stage-isobar",
-    type: "protein",
-    title: "128はKでもQでもよい",
-    instruction:
-      "配列の途中にある128は、リジンでもグルタミンでも同じ質量です。ペプチドは A(K/Q)M と WY です。切断の話はまだ使いません。2本とも含む候補を選んでください。",
-    sequence: "AKM",
-    shownPeakIds: ["intact"],
-    focusPeakIds: ["intact"],
-    peakLabelStyle: "side",
-    candidates: [
-      { id: "aka", name: "アカ", sequence: "AKMWY" },
-      { id: "ao", name: "アオ", sequence: "AQMGFR" },
-    ],
-    peptides: [
-      ["A", ["K", "Q"], "M"],
-      ["W", "Y"],
-    ],
-    correctCandidateIds: ["aka"],
-    resolveCutEnds: false,
-    explanation:
-      "A(K/Q)M はアカの K にもアオの Q にも合います。WY を含むのはアカだけなので、128を決めなくてもタンパク質はアカです。",
-  },
-  {
-    id: "cut-reason",
-    stageId: "stage-cut",
-    type: "choice",
-    title: "右端が偏っている",
-    instruction:
-      "タンパク質を絞り込んだときに読んだペプチドを振り返ってください。GAK の右端は K、GFR の右端は R でした。長い鎖がペプチドに分かれて見えていた理由として合うものを選んでください。",
-    sequence: "GAK",
-    shownPeakIds: ["intact", "right-1"],
-    focusPeakIds: ["right-1"],
-    peakLabelStyle: "side",
-    question: { kind: "labeled" },
-    choices: [
-      {
-        id: "cut",
-        sequence: "cut",
-        label: "KかRの右で、長い鎖が分かれていた",
-      },
-      {
-        id: "fragment",
-        sequence: "fragment",
-        label: "右のかけらの端が、いつも19だから",
-      },
-      {
-        id: "always",
-        sequence: "always",
-        label: "タンパク質の右端は、いつもKかRだから",
-      },
-    ],
-    correctChoiceId: "cut",
-    explanation:
-      "見えていたペプチドは、長い鎖が K または R の右で分かれたものです。右のかけらの19は、1本のペプチドをさらに切ったときの端で、この分かれ方とは別です。タンパク質本来の右端だけは、この切れ目ではないので、K でも R でもないことがあります。",
-    scienceNote:
-      "分解に使うのが酵素です。長い鎖は K か R の右で分かれ、分かれたペプチドを1本ずつ見ます。",
-  },
-  {
-    id: "cut-resolve",
-    stageId: "stage-cut",
-    type: "protein",
-    title: "切れた端の128はK",
-    instruction:
-      "GA(K/Q) と GFR が、別々のペプチドとして読めました。別々に見えたということは、128の右で鎖が分かれています。その端は K です。Q の右では分かれません。両方のペプチドを含む候補を選んでください。",
-    sequence: "GAK",
-    shownPeakIds: ["intact", "right-1"],
-    focusPeakIds: ["right-1"],
-    peakLabelStyle: "side",
-    candidates: [
-      { id: "aka", name: "アカ", sequence: "GAKGFR" },
-      { id: "ao", name: "アオ", sequence: "GAQGFR" },
-    ],
-    peptides: [
-      ["G", "A", ["K", "Q"]],
-      ["G", "F", "R"],
-    ],
-    correctCandidateIds: ["aka"],
-    resolveCutEnds: true,
-    explanation:
-      "切れた端の128は K なので、ペプチドは GAK と読みます。GAK を含むのはアカだけです。アオの Q の右では、この2本には分かれません。",
-  },
-  {
-    id: "main-internal",
-    stageId: "stage-main",
-    type: "protein",
-    title: "途中の128は決まらない",
-    instruction:
-      "A(K/Q)M の128は配列の途中です。切れた端ではないので、K か Q のままにしてください。もう1本の GFR と合わせて、両方を含む候補を選んでください。",
-    sequence: "AKM",
-    shownPeakIds: ["intact"],
-    focusPeakIds: ["intact"],
-    peakLabelStyle: "side",
-    candidates: [
-      { id: "aka", name: "アカ", sequence: "AKMGFR" },
-      { id: "ao", name: "アオ", sequence: "AQMGFR" },
-      { id: "kii", name: "キイ", sequence: "AKMWY" },
-    ],
-    peptides: [
-      ["A", ["K", "Q"], "M"],
-      ["G", "F", "R"],
-    ],
-    correctCandidateIds: ["aka", "ao"],
-    resolveCutEnds: true,
-    explanation:
-      "途中の128は K でも Q でも一致します。GFR を含まないキイは残しません。アカとアオはどちらも説明できるので、タンパク質は2つのままです。",
-  },
-  {
-    id: "main-both",
-    stageId: "stage-main",
-    type: "protein",
-    title: "113と、切れた128",
-    instruction:
-      "G(I/L)S の113は、切れ目では決まりません。GF(K/Q) は別のペプチドとして見えたので、その端の128は K です。2本とも含む候補を選んでください。",
-    sequence: "GIS",
-    shownPeakIds: ["intact"],
-    focusPeakIds: ["intact"],
-    peakLabelStyle: "side",
-    candidates: [
-      { id: "aka", name: "アカ", sequence: "GISGFK" },
-      { id: "ao", name: "アオ", sequence: "GLSGFQ" },
-      { id: "kii", name: "キイ", sequence: "GVSGFK" },
-    ],
-    peptides: [
-      ["G", ["I", "L"], "S"],
-      ["G", "F", ["K", "Q"]],
-    ],
-    correctCandidateIds: ["aka"],
-    resolveCutEnds: true,
-    explanation:
-      "切れた端は GFK です。アオの GFQ は、このペプチドになりません。G(I/L)S に合うのはアカとアオで、キイの V は合いません。両方を含むのはアカだけです。",
-  },
+  }
 ];

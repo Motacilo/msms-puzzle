@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { aminoAcids } from "../data/aminoAcids.ts";
 import { briefings } from "../data/briefings.ts";
+import { practiceProblems, practiceStages } from "../data/practice.ts";
 import { problems } from "../data/problems.ts";
 import { stages } from "../data/stages.ts";
 import { assessAnswer } from "../game/evaluateAnswer.ts";
@@ -18,6 +19,11 @@ import { AnalysisScreen } from "../screens/AnalysisScreen.tsx";
 import { BriefingScreen } from "../screens/BriefingScreen.tsx";
 import { HomeScreen } from "../screens/HomeScreen.tsx";
 import { ResultScreen } from "../screens/ResultScreen.tsx";
+import {
+  loadPracticeResults,
+  savePracticeResults,
+  type PracticeResults,
+} from "../storage/practiceStorage.ts";
 import { emptyProgress, loadProgress, saveProgress } from "../storage/progressStorage.ts";
 
 type FinishedJudgment = Exclude<Judgment, { status: "incomplete" }>;
@@ -28,6 +34,10 @@ type Route =
   | { name: "play"; problemId: string }
   | { name: "result"; problemId: string; judgment: FinishedJudgment };
 
+const allProblems = [...problems, ...practiceProblems];
+const allStages = [...stages, ...practiceStages];
+const practiceIds = new Set(practiceProblems.map((problem) => problem.id));
+
 const emptyDraft = (): AnswerDraft => ({ choiceId: null, placed: [], memos: {} });
 
 export function App() {
@@ -35,6 +45,7 @@ export function App() {
   const [route, setRoute] = useState<Route>({ name: "home" });
   const [drafts, setDrafts] = useState<Record<string, AnswerDraft>>({});
   const [notice, setNotice] = useState<string | null>(null);
+  const [practiceResults, setPracticeResults] = useState<PracticeResults>(loadPracticeResults);
 
   function remember(next: Progress) {
     setProgress(next);
@@ -66,7 +77,7 @@ export function App() {
   }
 
   function submit(problemId: string) {
-    const problem = problems.find((item) => item.id === problemId);
+    const problem = allProblems.find((item) => item.id === problemId);
     if (!problem) return;
     const draft = drafts[problemId] ?? emptyDraft();
     const judgment = assessAnswer(problem, draft);
@@ -78,6 +89,11 @@ export function App() {
       ? progress.clearedProblemIds
       : [...progress.clearedProblemIds, problemId];
     remember({ clearedProblemIds, lastProblemId: problemId });
+    if (practiceIds.has(problemId)) {
+      const next: PracticeResults = { ...practiceResults, [problemId]: judgment.status };
+      setPracticeResults(next);
+      savePracticeResults(next);
+    }
     setNotice(null);
     setRoute({ name: "result", problemId, judgment });
   }
@@ -92,7 +108,7 @@ export function App() {
     const nextLabel = !upcoming
       ? null
       : isBriefingId(stages, upcoming)
-        ? "次の説明"
+        ? "次の図"
         : "次の問題";
     return (
       <BriefingScreen
@@ -109,8 +125,8 @@ export function App() {
   }
 
   if (route.name === "play") {
-    const problem = problems.find((item) => item.id === route.problemId);
-    const stage = stages.find((item) => item.id === problem?.stageId);
+    const problem = allProblems.find((item) => item.id === route.problemId);
+    const stage = allStages.find((item) => item.id === problem?.stageId);
     if (!problem || !stage) return null;
     const index = stage.problemIds.indexOf(problem.id) + 1;
     return (
@@ -136,9 +152,9 @@ export function App() {
   }
 
   if (route.name === "result") {
-    const problem = problems.find((item) => item.id === route.problemId);
+    const problem = allProblems.find((item) => item.id === route.problemId);
     if (!problem) return null;
-    const upcoming = nextFlowId(stages, problem.id);
+    const upcoming = nextFlowId(practiceIds.has(problem.id) ? practiceStages : stages, problem.id);
     return (
       <ResultScreen
         problem={problem}
@@ -175,8 +191,13 @@ export function App() {
         if (continueProblemId) openItem(continueProblemId);
       }}
       onOpen={openItem}
+      practiceStages={practiceStages}
+      practiceProblems={practiceProblems}
+      practiceResults={practiceResults}
       onReset={() => {
         remember(emptyProgress);
+        setPracticeResults({});
+        savePracticeResults({});
         setDrafts({});
         setRoute({ name: "home" });
       }}

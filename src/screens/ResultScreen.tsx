@@ -25,7 +25,7 @@ function answerText(
   sequence: string,
   acids: readonly AminoAcid[],
 ): string {
-  if (sequence === CANNOT_BUILD_LABEL || problem.type === "protein") return sequence;
+  if (sequence === CANNOT_BUILD_LABEL) return sequence;
   if (problem.type === "choice") {
     const choice = problem.choices.find((item) => item.sequence === sequence);
     if (choice?.label) return choice.label;
@@ -73,14 +73,13 @@ export function ResultScreen({
         answerLabel={answerLabel}
         correctLabel={correctLabel}
         steps={steps}
-        stepsTitle={problem.type === "protein" ? "候補の絞り込み" : undefined}
         explanation={problem.explanation}
         scienceNote={problem.scienceNote}
       />
       <div className="actions">
         {nextProblemId ? (
           <button type="button" className="primary" onClick={onNext}>
-            {nextIsBriefing ? "次の説明" : "次の問題"}
+            {nextIsBriefing ? "次の図" : "次の問題"}
           </button>
         ) : (
           <button type="button" className="primary" onClick={onHome}>

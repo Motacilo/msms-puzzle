@@ -1,8 +1,6 @@
-import type {
-  ProteinCandidate,
-  ProteinProblem,
-  ResidueObservation,
-} from "./types.ts";
+/** 2026-11-02 にプレイから隔離。アプリ本体はこのフォルダを読み込まない。 */
+
+import type { ProteinCandidate, ProteinMatchProblem, ResidueObservation } from "./types.ts";
 
 export function formatObservation(token: ResidueObservation): string {
   if (typeof token === "string") return token;
@@ -23,20 +21,13 @@ export function proteinsConsistent(
   return candidates
     .filter((candidate) =>
       peptides.every((peptide, index) =>
-        containsPeptide(
-          candidate.sequence,
-          applyCut(peptide, resolveCutEnds),
-          ends[index],
-        ),
+        containsPeptide(candidate.sequence, applyCut(peptide, resolveCutEnds), ends[index]),
       ),
     )
     .map((candidate) => candidate.id);
 }
 
-export function candidateNames(
-  problem: ProteinProblem,
-  ids: readonly string[],
-): string {
+export function candidateNames(problem: ProteinMatchProblem, ids: readonly string[]): string {
   const names = problem.candidates
     .filter((candidate) => ids.includes(candidate.id))
     .map((candidate) => candidate.name);
@@ -59,10 +50,36 @@ function containsPeptide(
   peptide: readonly ResidueObservation[],
   end?: "n" | "c",
 ): boolean {
-  if (peptide.length === 0 || peptide.length > sequence.length) return false;
+  return peptideStarts(sequence, peptide, end).length > 0;
+}
+
+/** 候補配列のうち、観測したペプチドと重なる残基の位置。 */
+export function matchedResidueIndexes(
+  sequence: string,
+  peptides: readonly (readonly ResidueObservation[])[],
+  resolveCutEnds: boolean,
+  ends: readonly ("n" | "c" | undefined)[] = [],
+): number[] {
+  const indexes = new Set<number>();
+  peptides.forEach((peptide, peptideIndex) => {
+    const tokens = applyCut(peptide, resolveCutEnds);
+    for (const start of peptideStarts(sequence, tokens, ends[peptideIndex])) {
+      tokens.forEach((_, offset) => indexes.add(start + offset));
+    }
+  });
+  return [...indexes].sort((left, right) => left - right);
+}
+
+function peptideStarts(
+  sequence: string,
+  peptide: readonly ResidueObservation[],
+  end?: "n" | "c",
+): number[] {
+  if (peptide.length === 0 || peptide.length > sequence.length) return [];
   const lastStart = sequence.length - peptide.length;
   const startAt = end === "c" ? lastStart : 0;
   const endAt = end === "n" || end === "c" ? startAt : lastStart;
+  const starts: number[] = [];
   for (let start = startAt; start <= endAt; start += 1) {
     const matched = peptide.every((token, index) => {
       const residue = sequence[start + index];
@@ -70,9 +87,9 @@ function containsPeptide(
       if (typeof token === "string") return token === residue;
       return token.includes(residue);
     });
-    if (matched) return true;
+    if (matched) starts.push(start);
   }
-  return false;
+  return starts;
 }
 
 function isPair(token: ResidueObservation, left: string, right: string): boolean {

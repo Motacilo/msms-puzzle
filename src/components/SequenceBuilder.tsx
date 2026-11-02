@@ -13,7 +13,7 @@ export function SequenceBuilder({ acids, length, deal, placed, onChange }: Props
   return (
     <div className="builder">
       <p className="terminus-note">
-        左がN末端、右がC末端です。枠とアミノ酸は、どちらを先に押してもその位置に入ります。同じアミノ酸を合わせると、その枠は空になります。枠から枠へは選択だけが移ります。ドラッグでも入れ替えられます。＋で枠を足し、枠を長押しすると消せます。
+        左がN末端、右がC末端です。枠とアミノ酸は、どちらを先に押してもその位置に入ります。同じアミノ酸を合わせると、その枠は空になります。枠から枠へは選択だけが移ります。ドラッグでも入れ替えられます。＋で枠を足し、枠を長押しすると消せます。ゴミ箱は2回続けて押すと、入れたアミノ酸をすべて消します。
       </p>
       <ResidueBoard
         acids={acids}
@@ -23,6 +23,7 @@ export function SequenceBuilder({ acids, length, deal, placed, onChange }: Props
         maxSlots={12}
         hydrogen
         hydroxyl
+        clearable
         onCodesChange={(codes) => {
           if (codes.join("") === placed.join("")) return;
           onChange(codes);

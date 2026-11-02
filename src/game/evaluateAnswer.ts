@@ -1,4 +1,3 @@
-import { candidateNames, proteinsConsistent } from "./matchProteins.ts";
 import {
   CANNOT_BUILD,
   CANNOT_BUILD_LABEL,
@@ -12,29 +11,6 @@ import {
 export function assessAnswer(problem: Problem, draft: AnswerDraft): Judgment {
   if (problem.type === "choice" && problem.question.kind === "composition") {
     return assessComposition(problem, draft);
-  }
-
-  if (problem.type === "protein") {
-    const selected = draft.selectedIds ?? [];
-    if (selected.length === 0) {
-      return {
-        status: "incomplete",
-        message: "残る候補を選んでから回答してください。複数残るときは、すべて選んでください。",
-      };
-    }
-    const correctIds = proteinsConsistent(
-      problem.candidates,
-      problem.peptides,
-      problem.resolveCutEnds,
-      problem.peptideEnds,
-    );
-    const same =
-      [...selected].sort().join(",") === [...correctIds].sort().join(",");
-    return {
-      status: same ? "correct" : "incorrect",
-      answer: candidateNames(problem, selected),
-      correct: candidateNames(problem, correctIds),
-    };
   }
 
   if (problem.type === "choice") {
@@ -79,11 +55,19 @@ export function assessAnswer(problem: Problem, draft: AnswerDraft): Judgment {
     };
   }
 
-  const answer = draft.placed.join("");
-  if (answer === problem.correctSequence) {
+  const answer = draft.placed.map(canonicalCode).join("");
+  const correct = [...problem.correctSequence].map(canonicalCode).join("");
+  if (answer === correct) {
     return { status: "correct", answer, correct: problem.correctSequence };
   }
   return { status: "incorrect", answer, correct: problem.correctSequence };
+}
+
+/** 質量が同じ I/L と K/Q は区別できないので、どちらを置いても同じ答えとして扱う。 */
+function canonicalCode(code: string): string {
+  if (code === "L/I" || code === "I") return "L";
+  if (code === "K/Q" || code === "Q") return "K";
+  return code;
 }
 
 function assessComposition(problem: ChoiceProblem, draft: AnswerDraft): Judgment {

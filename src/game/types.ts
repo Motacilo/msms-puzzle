@@ -68,41 +68,28 @@ export type ChoiceProblem = ProblemBase & {
   correctChoiceId: string;
 };
 
+export type GuideStep = {
+  peakId: string;
+  text: string;
+};
+
 export type SequenceBuilderProblem = ProblemBase & {
   type: "sequence-builder";
   availableAminoAcids: string[];
   correctSequence: string;
-};
-
-export type ProteinCandidate = {
-  id: string;
-  name: string;
-  sequence: string;
-};
-
-/** 観測した1残基。質量が同じときは2文字の組。 */
-export type ResidueObservation = string | readonly [string, string];
-
-export type ProteinProblem = ProblemBase & {
-  type: "protein";
-  candidates: ProteinCandidate[];
-  peptides: ResidueObservation[][];
-  correctCandidateIds: string[];
-  /** ペプチド末尾の K/Q を、切れた端として K に確定してから照合する。 */
-  resolveCutEnds: boolean;
+  /** 最初の並べる問題で、ピークを順に示して解かせる。 */
+  guide?: readonly GuideStep[];
   /**
-   * ペプチドが付く端。n はタンパク質のN末端、c はC末端。
-   * 省略した位置は、配列のどこに含まれていてもよい。
+   * 練習問題。ピークは質量だけで左右の印がなく、見えていないピークがある。
+   * 見えているピークと矛盾しない配列が、長さを決めたうえで1つだけであることを検証する。
    */
-  peptideEnds?: readonly ("n" | "c")[];
-  /**
-   * スペクトルに出す質量。ペプチドと同じ順。
-   * 全長のN末端側は通常のピークに出ないため、あるときは配列のピークの代わりに使う。
-   */
-  observedMasses?: readonly number[];
+  deduce?: {
+    /** 画面に出す特徴の名前（title と同じ並び）。 */
+    features: readonly string[];
+  };
 };
 
-export type Problem = ChoiceProblem | SequenceBuilderProblem | ProteinProblem;
+export type Problem = ChoiceProblem | SequenceBuilderProblem;
 
 export type Stage = {
   id: string;
@@ -113,11 +100,19 @@ export type Stage = {
   briefingId?: string;
 };
 
-/** 解かずに読む説明。判定はない。 */
+export type LessonFigureKind = "goal" | "measure" | "cut" | "spectrum";
+
+export type BriefingPage = {
+  kicker: string;
+  text: string;
+  figure: LessonFigureKind;
+};
+
+/** 解かずに読む説明。判定はない。中でページをめくる。 */
 export type Briefing = {
   id: string;
   title: string;
-  paragraphs: string[];
+  pages: readonly BriefingPage[];
 };
 
 /** ピークに付ける、プレイヤー自身のかけらメモ。判定には使わない。 */
@@ -130,9 +125,15 @@ export type FragmentMemo = {
 export type AnswerDraft = {
   choiceId: string | null;
   placed: string[];
-  memos?: Record<string, FragmentMemo>;
-  /** タンパク質の候補で、残すと選んだ ID。 */
-  selectedIds?: string[];
+  /** ピークごとのメモ。1つのピークに複数つけられる。 */
+  memos?: Record<string, FragmentMemo[]>;
+  /**
+   * 2つのピークの間のメモ。キーは「質量の小さいほうのピークID|大きいほうのピークID」。
+   * 1つの間に複数つけられる。
+   */
+  rangeMemos?: Record<string, FragmentMemo[]>;
+  /** 問題ごとの自由メモ。判定には使わない。 */
+  freeNote?: string;
 };
 
 export type Judgment =

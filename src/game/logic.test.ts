@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { aminoAcids } from "../data/aminoAcids.ts";
+import { aminoAcidCodesByMass, aminoAcids } from "../data/aminoAcids.ts";
+import { trayCards } from "./tray.ts";
 import { briefings } from "../data/briefings.ts";
 import { problems } from "../data/problems.ts";
 import { stages } from "../data/stages.ts";
@@ -7,9 +8,20 @@ import { assessAnswer } from "./evaluateAnswer.ts";
 import { explainSolution } from "./explainSolution.ts";
 import { fragmentLabel } from "./labels.ts";
 import { buildPeptide } from "./fragments.ts";
-import { continueTarget, isProblemOpen, isStageOpen, nextFlowId, nextUnclearedId } from "./progression.ts";
+import { continueTarget, isProblemOpen, nextFlowId } from "./progression.ts";
 import { readShownPeaks } from "./readSequence.ts";
 import { validateAll } from "./validateProblem.ts";
+import {
+  backspace,
+  evaluate,
+  pressAcid,
+  pressConstant,
+  pressDigit,
+  pressEquals,
+  pressOperator,
+  type Token,
+} from "./calculator.ts";
+import { practiceProblems, practiceStages } from "../data/practice.ts";
 import { CANNOT_BUILD, type Problem } from "./types.ts";
 
 describe("かけらの質量", () => {
@@ -227,7 +239,7 @@ describe("左右を自分で決める", () => {
   });
 });
 
-describe("16種類とタンパク質", () => {
+describe("残基", () => {
   it("整数で一意な残基は16種類で、同じ質量は I/L と K/Q だけ", () => {
     const unique = ["G", "A", "S", "P", "V", "T", "C", "N", "D", "E", "M", "H", "F", "R", "Y", "W"];
     const masses = unique.map((code) => aminoAcids.find((acid) => acid.code === code)?.residueMass);
@@ -247,50 +259,6 @@ describe("16種類とタンパク質", () => {
     expect(readShownPeaks(3, shown).map((reading) => reading.mass)).toEqual([57, 71, 101]);
     expect(buildPeptide("GAV", aminoAcids).intactMass).toBe(gat.intactMass - 2);
 
-    const cut = problems.find((problem) => problem.id === "cut-resolve");
-    const open = problems.find((problem) => problem.id === "isobar-open");
-    const internal = problems.find((problem) => problem.id === "main-internal");
-    if (!cut || cut.type !== "protein" || !open || open.type !== "protein") {
-      throw new Error("問題がありません");
-    }
-    if (!internal || internal.type !== "protein") throw new Error("問題がありません");
-    expect(
-      assessAnswer(open, { choiceId: null, placed: [], selectedIds: ["aka", "ao"] }).status,
-    ).toBe("correct");
-    expect(
-      assessAnswer(cut, { choiceId: null, placed: [], selectedIds: ["aka"] }).status,
-    ).toBe("correct");
-    expect(
-      assessAnswer(cut, { choiceId: null, placed: [], selectedIds: ["aka", "ao"] }).status,
-    ).toBe("incorrect");
-    expect(
-      assessAnswer(internal, { choiceId: null, placed: [], selectedIds: ["aka", "ao"] }).status,
-    ).toBe("correct");
-
-    const one = problems.find((problem) => problem.id === "protein-one");
-    const two = problems.find((problem) => problem.id === "protein-two");
-    const narrow = problems.find((problem) => problem.id === "isobar-narrow");
-    if (!one || one.type !== "protein" || !two || two.type !== "protein") {
-      throw new Error("問題がありません");
-    }
-    if (!narrow || narrow.type !== "protein") throw new Error("問題がありません");
-    expect(one.observedMasses).toEqual([257]);
-    expect(one.peptideEnds).toEqual(["n"]);
-    expect(
-      assessAnswer(one, { choiceId: null, placed: [], selectedIds: ["aka", "ao"] }).status,
-    ).toBe("correct");
-    expect(
-      assessAnswer(one, { choiceId: null, placed: [], selectedIds: ["aka", "ao", "kii"] }).status,
-    ).toBe("incorrect");
-    expect(
-      assessAnswer(one, { choiceId: null, placed: [], selectedIds: ["kii"] }).status,
-    ).toBe("incorrect");
-    expect(two.observedMasses).toEqual([257, 379]);
-    expect(
-      assessAnswer(two, { choiceId: null, placed: [], selectedIds: ["aka"] }).status,
-    ).toBe("correct");
-    expect(narrow.observedMasses).toEqual([276, 379]);
-
     const fry = problems.find((problem) => problem.id === "seq-fry");
     const repeat = problems.find((problem) => problem.id === "seq-hmw");
     const lysine = problems.find((problem) => problem.id === "seq-gak");
@@ -299,11 +267,28 @@ describe("16種類とタンパク質", () => {
     if (!lysine || lysine.type !== "sequence-builder") throw new Error("問題がありません");
     expect(fry.availableAminoAcids).toEqual(["G", "A", "S", "P", "V", "F", "R", "Y"]);
     expect(repeat.correctSequence).toBe("WHW");
-    expect(repeat.availableAminoAcids).toEqual(expect.arrayContaining(["G", "H", "M", "W"]));
-    expect(repeat.availableAminoAcids).not.toEqual(expect.arrayContaining(["K"]));
-    expect(lysine.availableAminoAcids).toEqual(
-      expect.arrayContaining(["G", "A", "S", "P", "V", "F", "W", "T", "N", "K"]),
-    );
+    expect(repeat.availableAminoAcids).toEqual(aminoAcidCodesByMass);
+    expect(trayCards(repeat.availableAminoAcids, aminoAcids).map((card) => card.code)).toEqual([
+      "G",
+      "A",
+      "S",
+      "P",
+      "V",
+      "T",
+      "C",
+      "L/I",
+      "N",
+      "D",
+      "K/Q",
+      "E",
+      "M",
+      "H",
+      "F",
+      "R",
+      "Y",
+      "W",
+    ]);
+    expect(lysine.availableAminoAcids).toEqual(["G", "A", "S", "P", "V", "H", "M", "W", "K"]);
     expect(
       assessAnswer(repeat, { choiceId: null, placed: ["W", "H", "W"] }).status,
     ).toBe("correct");
@@ -314,61 +299,19 @@ describe("16種類とタンパク質", () => {
 });
 
 describe("進行", () => {
-  it("未完了の先頭へ戻れる", () => {
+  it("ペプチドを読む図から始まる", () => {
     expect(
       continueTarget(stages, problems, {
         clearedProblemIds: [],
         lastProblemId: null,
       }),
-    ).toBe("brief-protein");
-    expect(isProblemOpen("precursor-water", stages, [])).toBe(false);
-    expect(isProblemOpen("precursor-water", stages, ["brief-protein"])).toBe(true);
-    expect(isProblemOpen("precursor-water", stages, ["precursor-water"])).toBe(true);
-    expect(nextFlowId(stages, "precursor-charge")).toBe("brief-fragments");
-    expect(nextFlowId(stages, "seq-aem")).toBe("brief-digest");
-    const stageOne = stages.find((stage) => stage.id === "stage-precursor");
-    if (!stageOne) throw new Error("ステージがありません");
-    expect(
-      continueTarget(stages, problems, {
-        clearedProblemIds: ["brief-protein", ...stageOne.problemIds],
-        lastProblemId: null,
-      }),
     ).toBe("brief-fragments");
-    expect(nextUnclearedId(stages, ["brief-protein"], "brief-protein")).toBe("precursor-water");
-    const target = continueTarget(stages, problems, {
-      clearedProblemIds: [
-        "brief-protein",
-        "brief-fragments",
-        "precursor-water",
-        "precursor-charge",
-        "difference-left",
-      ],
-      lastProblemId: "difference-left",
-    });
-    expect(target).toBe("left-end");
-    const order = stages.find((stage) => stage.id === "stage-order");
-    if (!order) throw new Error("ステージがありません");
-    expect(
-      isStageOpen(order, stages, ["difference-left", "left-end", "right-end"]),
-    ).toBe(false);
-
-    const earlier = stages
-      .filter((stage) =>
-        ["stage-precursor", "stage-difference", "stage-order"].includes(stage.id),
-      )
-      .flatMap((stage) => stage.problemIds);
-    expect(
-      continueTarget(stages, problems, {
-        clearedProblemIds: ["brief-protein", "brief-fragments", ...earlier],
-        lastProblemId: null,
-      }),
-    ).toBe("complement-sga");
-    const sides = stages.find((stage) => stage.id === "stage-sides");
-    const gap = stages.find((stage) => stage.id === "stage-gap");
-    if (!sides || !gap) throw new Error("ステージがありません");
-    expect(isStageOpen(sides, stages, earlier)).toBe(true);
-    expect(isStageOpen(gap, stages, earlier)).toBe(false);
-    expect(isStageOpen(gap, stages, [...earlier, ...sides.problemIds])).toBe(true);
+    expect(isProblemOpen("assemble-gas", stages, [])).toBe(false);
+    expect(isProblemOpen("assemble-gas", stages, ["brief-fragments"])).toBe(true);
+    expect(isProblemOpen("left-end", stages, ["brief-fragments"])).toBe(false);
+    expect(nextFlowId(stages, "assemble-gas")).toBe("restore-asg");
+    expect(nextFlowId(stages, "restore-asg")).toBe("seq-hmw");
+    expect(nextFlowId(stages, "seq-hmw")).toBe(null);
   });
 });
 
@@ -377,3 +320,106 @@ function mass(built: ReturnType<typeof buildPeptide>, id: string): number {
   if (!peak) throw new Error(id);
   return peak.mass;
 }
+
+describe("練習問題", () => {
+  it("3〜7残基を10問ずつ持つ", () => {
+    expect(practiceStages.map((stage) => stage.problemIds.length)).toEqual([10, 10, 10, 10, 10]);
+    expect(practiceProblems.map((problem) => problem.sequence.length)).toEqual(
+      [3, 4, 5, 6, 7].flatMap((length) => Array(10).fill(length)),
+    );
+  });
+
+  it("見えているピークに合う並びが、どの問題でも1つに決まる", () => {
+    expect(validateAll(practiceProblems, practiceStages, aminoAcids, [])).toEqual([]);
+  });
+
+  it("質量が同じ L/I と K/Q は、どちらのカードでも正解になる", () => {
+    const problem = practiceProblems.find((item) => /[LK]/.test(item.sequence));
+    if (!problem || problem.type !== "sequence-builder") throw new Error("問題がありません");
+    const placed = [...problem.correctSequence].map((code) =>
+      code === "L" ? "L/I" : code === "K" ? "K/Q" : code,
+    );
+    expect(assessAnswer(problem, { choiceId: null, placed }).status).toBe("correct");
+  });
+});
+
+describe("電卓", () => {
+  const typed = (text: string, start: Token[] = []): Token[] =>
+    [...text].reduce<Token[]>((tokens, ch) => {
+      if ("+−×÷".includes(ch)) return pressOperator(tokens, ch as "+" | "−" | "×" | "÷");
+      return pressDigit(tokens, ch);
+    }, start);
+
+  it("四則演算で、かけ算とわり算を先に計算する", () => {
+    expect(evaluate(typed("12+3×4"))).toBe(24);
+    expect(evaluate(typed("100−30÷5"))).toBe(94);
+    expect(evaluate(typed("7÷2"))).toBe(3.5);
+  });
+
+  it("式が空のときと、0 でわるときは結果が出ない", () => {
+    expect(evaluate([])).toBeNull();
+    expect(evaluate(typed("5÷0"))).toBeNull();
+  });
+
+  it("右端が演算子のときは、その演算子を無視した値が出る", () => {
+    expect(evaluate(typed("12+"))).toBe(12);
+    expect(evaluate(typed("12+3×"))).toBe(15);
+    expect(evaluate(typed("8÷"))).toBe(8);
+    expect(evaluate(typed("+"))).toBeNull();
+  });
+
+  it("アミノ酸は残基質量として計算し、続けて押すと + が入る", () => {
+    let tokens = pressAcid([], "G", 57);
+    tokens = pressAcid(tokens, "A", 71);
+    tokens = pressAcid(tokens, "S", 87);
+    expect(tokens.map((token) => (token.kind === "op" ? token.op : token.kind))).toEqual([
+      "acid",
+      "+",
+      "acid",
+      "+",
+      "acid",
+    ]);
+    expect(evaluate(tokens)).toBe(215);
+    tokens = pressConstant(pressOperator(tokens, "+"), "19");
+    expect(evaluate(tokens)).toBe(234);
+  });
+
+  it("通常の数字とアミノ酸を混ぜた式も、そのまま計算できる", () => {
+    let tokens = pressAcid([], "K/Q", 128);
+    tokens = pressOperator(tokens, "−");
+    tokens = pressDigit(tokens, "1");
+    tokens = pressDigit(tokens, "9");
+    expect(evaluate(tokens)).toBe(109);
+  });
+
+  it("バックスペースは数字を1桁ずつ、アミノ酸や演算子は1つずつ消す", () => {
+    const tokens = typed("123+");
+    expect(backspace(tokens)).toEqual(typed("123"));
+    expect(backspace(backspace(tokens))).toEqual(typed("12"));
+    expect(backspace([])).toEqual([]);
+  });
+
+  it("= で式が結果の数1つになる", () => {
+    const tokens = pressEquals(typed("12+3×4"));
+    expect(tokens).toEqual([{ kind: "num", text: "24", typed: false }]);
+    expect(pressEquals(typed("12+"))).toEqual([{ kind: "num", text: "12", typed: false }]);
+  });
+});
+
+describe("メモの表示", () => {
+  it("L/I と K/Q は括弧で囲む", () => {
+    expect(
+      fragmentLabel({ residues: ["G", "L/I", "A", "K/Q"], hydrogen: false, hydroxyl: false }),
+    ).toBe("G(L/I)A(K/Q)");
+    expect(fragmentLabel({ residues: ["K/Q"], hydrogen: true, hydroxyl: true })).toBe("H-(K/Q)-OH");
+  });
+
+  it("ヒスチジンと端の H・OH を取り違えない", () => {
+    // 文字にすると「H-OH」で同じに見えるが、構造は別。画面は構造から描く。
+    const histidineOh = { residues: ["H"], hydrogen: false, hydroxyl: true };
+    const capsOnly = { residues: [], hydrogen: true, hydroxyl: true };
+    expect(histidineOh.residues).toEqual(["H"]);
+    expect(histidineOh.hydrogen).toBe(false);
+    expect(fragmentLabel(histidineOh)).not.toBe(fragmentLabel(capsOnly));
+  });
+});

@@ -1,26 +1,23 @@
 import { assessAnswer } from "./evaluateAnswer.ts";
 import { buildPeptide, residueMasses, selectPeaks } from "./fragments.ts";
 import { readShownPeaks } from "./readSequence.ts";
+import { distinctResidueMasses, solveSpectrum } from "./solveSpectrum.ts";
 import {
   CANNOT_BUILD,
-  LEFT_CAP,
-  RIGHT_CAP,
   type AminoAcid,
   type ChoiceProblem,
   type Problem,
-  type ProteinProblem,
-  type ResidueObservation,
   type SequenceBuilderProblem,
   type Stage,
   type Briefing,
 } from "./types.ts";
-import { proteinsConsistent } from "./matchProteins.ts";
 
 export function validateAll(
   problems: readonly Problem[],
   stages: readonly Stage[],
   table: readonly AminoAcid[],
   briefings: readonly Briefing[] = [],
+  thorough = true,
 ): string[] {
   const errors: string[] = [];
   const ids = new Set<string>();
@@ -46,14 +43,7 @@ export function validateAll(
   for (const problem of problems) {
     if (ids.has(problem.id)) errors.push(`問題IDが重複しています: ${problem.id}`);
     ids.add(problem.id);
-    errors.push(...validateProblem(problem, table));
-  }
-
-  const knownStages = new Set(stages.map((stage) => stage.id));
-  for (const problem of problems) {
-    if (!knownStages.has(problem.stageId)) {
-      errors.push(`${problem.id}: ステージがありません`);
-    }
+    errors.push(...validateProblem(problem, table, thorough));
   }
 
   const stagedIds = stages.flatMap((stage) => stage.problemIds);
@@ -63,9 +53,12 @@ export function validateAll(
   for (const id of stagedIds) {
     if (!ids.has(id)) errors.push(`ステージが未知の問題を指しています: ${id}`);
   }
-  for (const problem of problems) {
-    if (!stagedIds.includes(problem.id)) {
-      errors.push(`${problem.id}: どのステージにも入っていません`);
+  for (const stage of stages) {
+    for (const id of stage.problemIds) {
+      const problem = problems.find((item) => item.id === id);
+      if (problem && problem.stageId !== stage.id) {
+        errors.push(`${id}: ステージIDが ${stage.id} と一致しません`);
+      }
     }
   }
 
@@ -82,8 +75,13 @@ export function validateAll(
     if (!briefingIds.includes(briefing.id)) {
       errors.push(`${briefing.id}: どのステージの前にも入っていません`);
     }
-    if (briefing.paragraphs.length === 0) {
-      errors.push(`${briefing.id}: 説明の本文がありません`);
+    if (briefing.pages.length === 0) {
+      errors.push(`${briefing.id}: 説明のページがありません`);
+    }
+    for (const page of briefing.pages) {
+      if (page.text.trim().length === 0) {
+        errors.push(`${briefing.id}: 説明の本文がありません`);
+      }
     }
   }
 
@@ -95,14 +93,19 @@ export function assertPlayable(
   stages: readonly Stage[],
   table: readonly AminoAcid[],
   briefings: readonly Briefing[] = [],
+  thorough = true,
 ): void {
-  const errors = validateAll(problems, stages, table, briefings);
+  const errors = validateAll(problems, stages, table, briefings, thorough);
   if (errors.length > 0) {
     throw new Error(`問題データが規則と合っていません\n${errors.join("\n")}`);
   }
 }
 
-function validateProblem(problem: Problem, table: readonly AminoAcid[]): string[] {
+function validateProblem(
+  problem: Problem,
+  table: readonly AminoAcid[],
+  thorough: boolean,
+): string[] {
   const errors: string[] = [];
   const prefix = problem.id;
   let built;
@@ -136,12 +139,53 @@ function validateProblem(problem: Problem, table: readonly AminoAcid[]): string[
 
   if (problem.type === "choice") {
     errors.push(...validateChoice(problem, table, shown));
-  } else if (problem.type === "protein") {
-    errors.push(...validateProtein(problem, table));
+  } else if (problem.deduce) {
+    errors.push(...validateDeduce(problem, table, shown, thorough));
   } else {
     errors.push(...validateSequence(problem, table, shown));
   }
 
+  return errors;
+}
+
+/**
+ * 練習問題。左右の印がなく、見えないピークがある。
+ * 見えている質量をすべて説明できる配列が、長さを決めたうえで正解の1つだけであることを確かめる。
+ * 探索は数十ミリ秒かかるので、起動時の検査では thorough を切る。
+ */
+function validateDeduce(
+  problem: SequenceBuilderProblem,
+  table: readonly AminoAcid[],
+  shown: ReturnType<typeof selectPeaks>,
+  thorough: boolean,
+): string[] {
+  const errors: string[] = [];
+  const prefix = problem.id;
+  if (problem.correctSequence !== problem.sequence) {
+    errors.push(`${prefix}: 正解配列とペプチド配列が違います`);
+  }
+  if (!dealCovers(problem.availableAminoAcids, [...problem.correctSequence])) {
+    errors.push(`${prefix}: 配るカードに正解の残基が足りません`);
+  }
+  if (shown.length < 2) errors.push(`${prefix}: 見えているピークが少なすぎます`);
+  if (problem.deduce && problem.deduce.features.length === 0) {
+    errors.push(`${prefix}: 特徴の名前がありません`);
+  }
+  if (!thorough) return errors;
+
+  const dealt = table.filter((acid) => problem.availableAminoAcids.includes(acid.code));
+  const matches = solveSpectrum(
+    problem.correctSequence.length,
+    shown.map((peak) => peak.mass),
+    distinctResidueMasses(dealt),
+    3,
+  );
+  const truth = residueMasses(problem.correctSequence, table).join(",");
+  if (matches.length !== 1 || matches[0]?.join(",") !== truth) {
+    errors.push(
+      `${prefix}: 見えているピークに合う並びが1つではありません (${matches.map((m) => m.join("-")).join(" / ") || "なし"})`,
+    );
+  }
   return errors;
 }
 
@@ -418,100 +462,6 @@ function sumSequence(sequence: string, table: readonly AminoAcid[]): number {
   return residueMasses(sequence, table).reduce((sum, mass) => sum + mass, 0);
 }
 
-function validateProtein(
-  problem: ProteinProblem,
-  table: readonly AminoAcid[],
-): string[] {
-  const errors: string[] = [];
-  const prefix = problem.id;
-  if (problem.candidates.length < 2) {
-    errors.push(`${prefix}: 候補は2つ以上必要です`);
-  }
-  if (problem.peptides.length === 0) {
-    errors.push(`${prefix}: 観測ペプチドがありません`);
-  }
-  const ids = problem.candidates.map((candidate) => candidate.id);
-  if (new Set(ids).size !== ids.length) {
-    errors.push(`${prefix}: 候補IDが重複しています`);
-  }
-  for (const candidate of problem.candidates) {
-    errors.push(...unknownCodes(prefix, candidate.sequence, table));
-  }
-  for (const peptide of problem.peptides) {
-    if (peptide.length === 0) errors.push(`${prefix}: 空のペプチドがあります`);
-    for (const token of peptide) {
-      if (typeof token === "string") {
-        errors.push(...unknownCodes(prefix, token, table));
-      } else {
-        const key = [...token].sort().join("");
-        if (key !== "IL" && key !== "KQ") {
-          errors.push(`${prefix}: 質量が同じ組は I/L と K/Q だけです (${key})`);
-        }
-      }
-    }
-  }
-  if (problem.peptideEnds && problem.peptideEnds.length > problem.peptides.length) {
-    errors.push(`${prefix}: 端の指定がペプチドより多いです`);
-  }
-  if (problem.observedMasses) {
-    if (problem.observedMasses.length !== problem.peptides.length) {
-      errors.push(`${prefix}: 表示質量の数がペプチドと違います`);
-    } else {
-      problem.peptides.forEach((peptide, index) => {
-        const sum = observedResidueSum(peptide, table);
-        const end = problem.peptideEnds?.[index];
-        const cap = end === "n" ? LEFT_CAP : RIGHT_CAP;
-        const mass = problem.observedMasses?.[index];
-        if (sum === null || mass !== sum + cap) {
-          errors.push(`${prefix}: 表示質量が残基と合いません (${String(mass)})`);
-        }
-      });
-    }
-  }
-  const matched = proteinsConsistent(
-    problem.candidates,
-    problem.peptides,
-    problem.resolveCutEnds,
-    problem.peptideEnds,
-  );
-  const correct = [...problem.correctCandidateIds].sort().join(",");
-  if ([...matched].sort().join(",") !== correct) {
-    errors.push(
-      `${prefix}: 残る候補が正解と違います (規則: ${matched.join(", ") || "なし"})`,
-    );
-  }
-  return errors;
-}
-
-function observedResidueSum(
-  peptide: readonly ResidueObservation[],
-  table: readonly AminoAcid[],
-): number | null {
-  let sum = 0;
-  for (const token of peptide) {
-    const codes = typeof token === "string" ? [token] : [...token];
-    const masses = codes.map(
-      (code) => table.find((acid) => acid.code === code)?.residueMass,
-    );
-    if (masses.some((mass) => mass === undefined)) return null;
-    if (new Set(masses).size !== 1) return null;
-    const mass = masses[0];
-    if (mass === undefined) return null;
-    sum += mass;
-  }
-  return sum;
-}
-
-function unknownCodes(
-  prefix: string,
-  sequence: string,
-  table: readonly AminoAcid[],
-): string[] {
-  return [...sequence]
-    .filter((code) => !table.some((acid) => acid.code === code))
-    .map((code) => `${prefix}: 未定義の残基です (${code})`);
-}
-
 function validateSequence(
   problem: SequenceBuilderProblem,
   table: readonly AminoAcid[],
@@ -524,6 +474,11 @@ function validateSequence(
   }
   if (!dealCovers(problem.availableAminoAcids, [...problem.correctSequence])) {
     errors.push(`${prefix}: 配るカードに正解の残基が足りません`);
+  }
+  for (const step of problem.guide ?? []) {
+    if (!shown.some((peak) => peak.id === step.peakId)) {
+      errors.push(`${prefix}: 説明が指すピーク ${step.peakId} が見えていません`);
+    }
   }
 
   const readings = readShownPeaks(problem.sequence.length, shown);

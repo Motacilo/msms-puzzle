@@ -7,6 +7,8 @@ type Props = {
   hydrogen: boolean;
   hydroxyl: boolean;
   empties?: number;
+  /** 読めたペプチドと重なる残基。 */
+  observedIndexes?: readonly number[];
   onRemove?: (index: number) => void;
   onMove?: (index: number, delta: number) => void;
   onHydrogen?: () => void;
@@ -19,6 +21,7 @@ export function PeptideChain({
   hydrogen,
   hydroxyl,
   empties = 0,
+  observedIndexes = [],
   onRemove,
   onMove,
   onHydrogen,
@@ -34,6 +37,7 @@ export function PeptideChain({
             <ResidueBead
               code={code}
               acids={acids}
+              observed={observedIndexes.includes(index)}
               onClick={onRemove ? () => onRemove(index) : undefined}
             />
             {onMove ? (
@@ -68,16 +72,19 @@ export function PeptideChain({
 function ResidueBead({
   code,
   acids,
+  observed = false,
   onClick,
 }: {
   code: string;
   acids: readonly AminoAcid[];
+  observed?: boolean;
   onClick?: () => void;
 }) {
   const name = residueLabel(code, acids);
+  const className = observed ? "bead is-observed" : "bead";
   if (!onClick) {
     return (
-      <span className="bead" data-code={code}>
+      <span className={className} data-code={code}>
         {code}
       </span>
     );
@@ -85,7 +92,7 @@ function ResidueBead({
   return (
     <button
       type="button"
-      className="bead"
+      className={className}
       data-code={code}
       aria-label={`${name} を戻す`}
       onClick={onClick}

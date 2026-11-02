@@ -51,9 +51,11 @@ export function isStageOpen(
 ): boolean {
   const index = stages.findIndex((item) => item.id === stage.id);
   if (index <= 0) return true;
-  return stages
-    .slice(0, index)
-    .every((earlier) => earlier.problemIds.every((id) => clearedProblemIds.includes(id)));
+  return stages.slice(0, index).every((earlier) => {
+    const briefingDone =
+      earlier.briefingId === undefined || clearedProblemIds.includes(earlier.briefingId);
+    return briefingDone && earlier.problemIds.every((id) => clearedProblemIds.includes(id));
+  });
 }
 
 export function isProblemOpen(

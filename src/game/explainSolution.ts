@@ -1,8 +1,7 @@
 import { buildPeptide, residueMasses, selectPeaks } from "./fragments.ts";
 import { residueLabel } from "./labels.ts";
-import { candidateNames, formatPeptide, proteinsConsistent } from "./matchProteins.ts";
 import { readShownPeaks } from "./readSequence.ts";
-import type { AminoAcid, Problem, ResidueObservation } from "./types.ts";
+import type { AminoAcid, Problem } from "./types.ts";
 
 export type ExplanationStep = {
   label: string;
@@ -106,35 +105,8 @@ export function explainSolution(
     ];
   }
 
-  if (problem.type === "protein") {
-    return problem.peptides.map((peptide, index) => {
-      const end = problem.peptideEnds?.[index];
-      const mass = problem.observedMasses?.[index];
-      const where = end === "n" ? "、N末端" : end === "c" ? "、C末端" : "";
-      const name = formatPeptide(shownPeptide(peptide, problem.resolveCutEnds));
-      return {
-        label: mass === undefined ? name : `${name}（${mass}${where}）`,
-        equation: candidateNames(
-          problem,
-          problem.candidates
-            .filter((candidate) =>
-              proteinsConsistent(
-                [candidate],
-                [peptide],
-                problem.resolveCutEnds,
-                [end],
-              ).includes(candidate.id),
-            )
-            .map((candidate) => candidate.id),
-        ),
-      };
-    }).concat({
-      label: "残る候補",
-      equation: candidateNames(problem, problem.correctCandidateIds),
-    });
-  }
-
   if (problem.type !== "sequence-builder") return [];
+  if (problem.deduce) return explainLadders(problem.sequence, problem.shownPeakIds, built.peaks);
   return readShownPeaks(problem.sequence.length, shown).map((reading) => {
     const code = problem.sequence[reading.position] ?? "";
     return {
@@ -142,19 +114,6 @@ export function explainSolution(
       equation: withCode(reading.equation, code, table),
     };
   });
-}
-
-function shownPeptide(
-  peptide: readonly ResidueObservation[],
-  resolveCutEnds: boolean,
-): ResidueObservation[] {
-  if (!resolveCutEnds || peptide.length === 0) return [...peptide];
-  const next = [...peptide];
-  const last = next[next.length - 1];
-  if (Array.isArray(last) && last.includes("K") && last.includes("Q")) {
-    next[next.length - 1] = "K";
-  }
-  return next;
 }
 
 function withCode(
@@ -188,4 +147,35 @@ function namesForMass(mass: number, table: readonly AminoAcid[]): string | null 
   const acids = table.filter((acid) => acid.residueMass === mass);
   if (acids.length === 0) return null;
   return acids.map((acid) => residueLabel(acid.code, table)).join(" または ");
+}
+
+/** 練習問題の解説。左右それぞれの並びと、見えなかったピークを示す。 */
+function explainLadders(
+  sequence: string,
+  shownIds: readonly string[],
+  peaks: ReturnType<typeof buildPeptide>["peaks"],
+): ExplanationStep[] {
+  const shownSet = new Set(shownIds);
+  const ladder = (side: "left" | "right") =>
+    peaks
+      .filter((peak) => peak.side === side)
+      .sort((a, b) => a.depth - b.depth)
+      .map((peak) => (shownSet.has(peak.id) ? `${peak.mass}` : `（${peak.mass}）`))
+      .join(" → ");
+  const intact = peaks.find((peak) => peak.side === "intact");
+  const steps: ExplanationStep[] = [
+    { label: "左のかけら（短い順）", equation: ladder("left") },
+    { label: "右のかけら（短い順）", equation: ladder("right") },
+  ];
+  if (intact) {
+    steps.push({
+      label: "切る前",
+      equation: shownSet.has(intact.id) ? `${intact.mass}` : `（${intact.mass}）`,
+    });
+  }
+  steps.push({
+    label: "読み方",
+    equation: `括弧は見えなかったピーク。左と右の組は足すと、切る前 + 1 になります。答え: ${[...sequence].join(" – ")}`,
+  });
+  return steps;
 }

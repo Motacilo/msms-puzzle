@@ -1,0 +1,53 @@
+/* 2026-11-02 にプレイから隔離。同定の画面を戻すときに使う。 */
+
+.protein-list {
+  display: grid;
+  gap: 0.6rem;
+}
+
+.protein-option {
+  width: 100%;
+  justify-items: start;
+  text-align: left;
+}
+
+.protein-option .peptide-chain {
+  margin: 0.35rem 0 0;
+}
+
+.observed-peptides {
+  margin: 0 0 0.8rem;
+  padding-left: 1.2rem;
+}
+
+.sample-frame {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 1.2rem;
+  padding: 0.9rem 1rem 0.4rem;
+  margin: 0.8rem 0 1.2rem;
+}
+
+.sample-frame.is-compact {
+  padding-bottom: 0.9rem;
+}
+
+.sample-status,
+.sample-names {
+  margin: 0.2rem 0 0.6rem;
+}
+
+.sample-candidates {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.sample-candidate.is-result {
+  border-radius: 0.9rem;
+  box-shadow: inset 0 0 0 2px var(--accent);
+  padding: 0.35rem 0.55rem 0;
+}
+
+.bead.is-observed {
+  box-shadow: 0 0 0 3px #c47b12;
+}

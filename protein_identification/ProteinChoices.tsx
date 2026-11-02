@@ -1,9 +1,12 @@
-import { PeptideChain } from "./PeptideChain.tsx";
-import { formatPeptide } from "../game/matchProteins.ts";
-import type { AminoAcid, ProteinProblem } from "../game/types.ts";
+/** 2026-11-02 にプレイから隔離。アプリ本体はこのフォルダを読み込まない。 */
+
+import { PeptideChain } from "../src/components/PeptideChain.tsx";
+import type { AminoAcid } from "../src/game/types.ts";
+import { formatPeptide, matchedResidueIndexes } from "./matchProteins.ts";
+import type { ProteinMatchProblem } from "./types.ts";
 
 type Props = {
-  problem: ProteinProblem;
+  problem: ProteinMatchProblem;
   acids: readonly AminoAcid[];
   selectedIds: readonly string[];
   onToggle: (id: string) => void;
@@ -24,6 +27,7 @@ export function ProteinChoices({ problem, acids, selectedIds, onToggle }: Props)
           );
         })}
       </ul>
+      <p className="figure-note">枠で囲んだ残基が、読めたペプチドの位置です。</p>
       <div className="protein-list" role="group" aria-label="残るタンパク質の候補">
         {problem.candidates.map((candidate) => {
           const selected = selectedIds.includes(candidate.id);
@@ -41,6 +45,12 @@ export function ProteinChoices({ problem, acids, selectedIds, onToggle }: Props)
                 residues={[...candidate.sequence]}
                 hydrogen
                 hydroxyl
+                observedIndexes={matchedResidueIndexes(
+                  candidate.sequence,
+                  problem.peptides,
+                  problem.resolveCutEnds,
+                  problem.peptideEnds,
+                )}
               />
             </button>
           );

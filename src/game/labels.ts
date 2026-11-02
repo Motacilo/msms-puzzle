@@ -1,8 +1,16 @@
 import type { AminoAcid, FragmentMemo, Peak } from "./types.ts";
 
-/** 端もアミノ酸も大文字。左端は H-、右端は -OH。 */
+/** 質量が同じ L/I、K/Q は、並びの中で区切りが分かるように括弧で囲む。 */
+export function displayCode(code: string): string {
+  return code.includes("/") ? `(${code})` : code;
+}
+
+/**
+ * 文字にした表示（読み上げや重複の判定に使う）。端もアミノ酸も大文字。左端は H-、右端は -OH。
+ * 画面の表示は FragmentLabel が構造から描くので、ヒスチジンの H と取り違えない。
+ */
 export function fragmentLabel(memo: FragmentMemo): string {
-  const codes = memo.residues.join("");
+  const codes = memo.residues.map(displayCode).join("");
   if (!memo.hydrogen && !memo.hydroxyl) return codes;
   if (memo.hydrogen && memo.hydroxyl) return `H-${codes}-OH`;
   if (memo.hydrogen) return `H-${codes}`;
