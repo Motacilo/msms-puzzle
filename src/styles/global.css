@@ -1645,3 +1645,103 @@ h2 {
   display: inline-flex;
   align-items: center;
 }
+
+/* ホーム：練習問題のブロック表示（サムネイルは各問題のスペクトル） */
+.problem-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(10.5rem, 1fr));
+  gap: 0.75rem;
+  margin: 0.7rem 0 1rem;
+}
+
+.problem-tile {
+  display: grid;
+  gap: 0.15rem;
+  align-content: start;
+  padding: 0.45rem 0.45rem 0.65rem;
+  border: 1px solid var(--line);
+  border-radius: 0.9rem;
+  background: var(--panel);
+  color: var(--ink);
+  text-align: left;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+.problem-tile:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0.35rem 0.9rem rgba(29, 36, 48, 0.12);
+}
+
+.problem-tile.is-correct {
+  border-color: var(--good);
+}
+
+.problem-tile.is-incorrect {
+  border-color: var(--bad);
+}
+
+.tile-thumb {
+  position: relative;
+  display: block;
+  margin-bottom: 0.35rem;
+  border-radius: 0.6rem;
+  background: color-mix(in srgb, var(--paper) 70%, var(--panel));
+  overflow: hidden;
+}
+
+.spectrum-thumb {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.thumb-axis {
+  stroke: var(--muted);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.thumb-peak {
+  stroke: var(--ink);
+  stroke-width: 2.2;
+  stroke-linecap: butt;
+}
+
+.tile-status {
+  position: absolute;
+  top: 0.3rem;
+  right: 0.3rem;
+  padding: 0 0.5rem;
+  border-radius: 999px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 0.75rem;
+  line-height: 1.5;
+}
+
+.problem-tile.is-correct .tile-status {
+  background: var(--good);
+  border-color: var(--good);
+  color: white;
+}
+
+.problem-tile.is-incorrect .tile-status {
+  background: var(--bad);
+  border-color: var(--bad);
+  color: white;
+}
+
+.tile-number {
+  padding: 0 0.3rem;
+  font-size: 1.15rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.tile-label {
+  padding: 0 0.3rem;
+  color: var(--muted);
+  font-size: 0.85rem;
+  line-height: 1.35;
+}

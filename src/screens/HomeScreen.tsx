@@ -1,3 +1,6 @@
+import { SpectrumThumbnail } from "../components/SpectrumThumbnail.tsx";
+import { aminoAcids } from "../data/aminoAcids.ts";
+import { buildPeptide, selectPeaks } from "../game/fragments.ts";
 import type { Briefing, Problem, Stage } from "../game/types.ts";
 import type { PracticeResults } from "../storage/practiceStorage.ts";
 
@@ -128,25 +131,34 @@ export function HomeScreen({
                 {stage.title}
                 <span className="status"> 　正解 {correct} / {items.length}</span>
               </h2>
-              <ol>
+              <div className="problem-grid">
                 {items.map((problem) => {
                   const result = practiceResults[problem.id];
+                  const state = result ?? "none";
+                  const [number = "", ...rest] = problem.title.split(" ");
+                  const peaks = selectPeaks(
+                    buildPeptide(problem.sequence, aminoAcids).peaks,
+                    problem.shownPeakIds,
+                  );
                   return (
-                    <li key={problem.id}>
-                      <button
-                        type="button"
-                        className="problem-row"
-                        onClick={() => onOpen(problem.id)}
-                      >
-                        <span>{problem.title}</span>
-                        <span className="status">
+                    <button
+                      key={problem.id}
+                      type="button"
+                      className={`problem-tile is-${state}`}
+                      onClick={() => onOpen(problem.id)}
+                    >
+                      <span className="tile-thumb">
+                        <SpectrumThumbnail peaks={peaks} />
+                        <span className="tile-status">
                           {result === "correct" ? "正解" : result === "incorrect" ? "不正解" : "未着手"}
                         </span>
-                      </button>
-                    </li>
+                      </span>
+                      <span className="tile-number">{number}</span>
+                      <span className="tile-label">{rest.join(" ")}</span>
+                    </button>
                   );
                 })}
-              </ol>
+              </div>
             </section>
           );
         })}
