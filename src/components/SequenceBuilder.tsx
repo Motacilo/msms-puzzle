@@ -12,9 +12,13 @@ type Props = {
 export function SequenceBuilder({ acids, length, deal, placed, onChange }: Props) {
   return (
     <div className="builder">
-      <p className="terminus-note">
-        左がN末端、右がC末端です。枠とアミノ酸は、どちらを先に押してもその位置に入ります。同じアミノ酸を合わせると、その枠は空になります。枠から枠へは選択だけが移ります。ドラッグでも入れ替えられます。＋で枠を足し、枠を長押しすると消せます。ゴミ箱は2回続けて押すと、入れたアミノ酸をすべて消します。
-      </p>
+      <p className="terminus-note builder-ends">左がN末端、右がC末端です。</p>
+      <details className="howto">
+        <summary>並べ方</summary>
+        <p className="terminus-note">
+          枠とアミノ酸は、どちらを先に押してもその位置に入ります。同じアミノ酸を合わせると、その枠は空になります。枠から枠へは選択だけが移ります。ドラッグでも入れ替えられます。＋で枠を足し、枠を長押しすると消せます。ゴミ箱は2回続けて押すと、入れたアミノ酸をすべて消します。
+        </p>
+      </details>
       <ResidueBoard
         acids={acids}
         deal={deal}
@@ -29,6 +33,13 @@ export function SequenceBuilder({ acids, length, deal, placed, onChange }: Props
           onChange(codes);
         }}
       />
+      <ul className="aa-legend" aria-label="アミノ酸の色分け">
+        <li data-group="hydrophobic">疎水性</li>
+        <li data-group="aromatic">芳香族</li>
+        <li data-group="acidic">酸性</li>
+        <li data-group="basic">塩基性</li>
+        <li data-group="polar">そのほかの親水性</li>
+      </ul>
     </div>
   );
 }

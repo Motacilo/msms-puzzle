@@ -1,3 +1,4 @@
+import { ClearCelebration } from "../components/ClearCelebration.tsx";
 import { FeedbackPanel } from "../components/FeedbackPanel.tsx";
 import { PeptideChain } from "../components/PeptideChain.tsx";
 import { explainSolution } from "../game/explainSolution.ts";
@@ -48,6 +49,8 @@ export function ResultScreen({
   const steps = explainSolution(problem, acids);
   const answerLabel = answerText(problem, judgment.answer, acids);
   const correctLabel = answerText(problem, judgment.correct, acids);
+  const correct = judgment.status === "correct";
+  const nextLabel = nextProblemId ? (nextIsBriefing ? "次の図へ" : "次の問題へ") : "ステージ選択へ";
 
   return (
     <main className="app">
@@ -57,7 +60,9 @@ export function ResultScreen({
         </button>
         <p className="eyebrow">{problem.title}</p>
       </div>
-      {problem.type === "sequence-builder" ? (
+      {correct ? (
+        <ClearCelebration key={problem.id} problem={problem} acids={acids} />
+      ) : problem.type === "sequence-builder" ? (
         <div className="result-peptide">
           <p className="terminus-note">正解のペプチド</p>
           <PeptideChain
@@ -68,6 +73,21 @@ export function ResultScreen({
           />
         </div>
       ) : null}
+      <div className="next-row">
+        <button
+          type="button"
+          className={correct ? "primary next-big is-clear" : "primary next-big"}
+          onClick={nextProblemId ? onNext : onHome}
+        >
+          <span>{nextLabel}</span>
+          <span className="next-arrow" aria-hidden="true" />
+        </button>
+        {correct ? null : (
+          <button type="button" className="secondary next-side" onClick={onRetry}>
+            もう一度
+          </button>
+        )}
+      </div>
       <FeedbackPanel
         judgment={judgment}
         answerLabel={answerLabel}

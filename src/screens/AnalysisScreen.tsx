@@ -57,6 +57,7 @@ export function AnalysisScreen({
   const multiple = problem.type === "choice" && problem.question.kind === "composition";
   const memos = draft.memos ?? {};
   const rangeMemos = draft.rangeMemos ?? {};
+  const peakColors = draft.peakColors ?? {};
   const notes: Record<string, readonly FragmentMemo[]> = Object.fromEntries(
     Object.entries(memos).filter(([, list]) => list.length > 0),
   );
@@ -127,6 +128,7 @@ export function AnalysisScreen({
             peaks={shown}
             notes={notes}
             rangeNotes={rangeNotes}
+            peakColors={peakColors}
             selectedPeakId={selectedPeakId}
             guidePeakId={showingGuide ? guideStep?.peakId : undefined}
             onSelect={tapPeak}
@@ -219,6 +221,13 @@ export function AnalysisScreen({
             if (list.length === 0) delete next[memoTarget.id];
             else next[memoTarget.id] = list;
             onDraft({ ...draft, memos: next });
+          }}
+          color={peakColors[memoTarget.id] ?? "black"}
+          onColor={(color) => {
+            const next = { ...peakColors };
+            if (color === "black") delete next[memoTarget.id];
+            else next[memoTarget.id] = color;
+            onDraft({ ...draft, peakColors: next });
           }}
           onClose={() => setMemoTarget(null)}
         />

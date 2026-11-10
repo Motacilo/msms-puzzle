@@ -122,9 +122,14 @@ export type FragmentMemo = {
   hydroxyl: boolean;
 };
 
+/** ピークに付けられる色。黒が初期値。判定には使わない。 */
+export type PeakColor = "black" | "blue" | "green" | "orange" | "pink" | "purple";
+
 export type AnswerDraft = {
   choiceId: string | null;
   placed: string[];
+  /** ピークごとの色。黒のピークは持たない。 */
+  peakColors?: Record<string, PeakColor>;
   /** ピークごとのメモ。1つのピークに複数つけられる。 */
   memos?: Record<string, FragmentMemo[]>;
   /**

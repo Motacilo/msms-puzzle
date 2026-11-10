@@ -3,7 +3,8 @@ import { FragmentLabel } from "./FragmentLabel.tsx";
 import { Modal } from "./Modal.tsx";
 import { ResidueBoard } from "./ResidueBoard.tsx";
 import { fragmentLabel } from "../game/labels.ts";
-import type { AminoAcid, FragmentMemo } from "../game/types.ts";
+import { PEAK_COLORS } from "../game/peakColors.ts";
+import type { AminoAcid, FragmentMemo, PeakColor } from "../game/types.ts";
 
 /** 1つのピークに付けられるメモの数。 */
 export const MAX_MEMOS_PER_PEAK = 6;
@@ -17,10 +18,23 @@ type Props = {
   /** いま付いているメモ。追加や削除のたびに onChange で返す。 */
   memos: readonly FragmentMemo[];
   onChange: (memos: FragmentMemo[]) => void;
+  /** ピークの色。ピークのメモのときだけ選べる。押すとすぐに図へ反映する。 */
+  color?: PeakColor;
+  onColor?: (color: PeakColor) => void;
   onClose: () => void;
 };
 
-export function FragmentMemoDialog({ scope, title, acids, palette, memos, onChange, onClose }: Props) {
+export function FragmentMemoDialog({
+  scope,
+  title,
+  acids,
+  palette,
+  memos,
+  onChange,
+  color = "black",
+  onColor,
+  onClose,
+}: Props) {
   const [residues, setResidues] = useState<string[]>([]);
   const [hydrogen, setHydrogen] = useState(false);
   const [hydroxyl, setHydroxyl] = useState(false);
@@ -74,6 +88,24 @@ export function FragmentMemoDialog({ scope, title, acids, palette, memos, onChan
 
   return (
     <Modal title={title} titleId="fragment-memo-title" onClose={onClose}>
+      {onColor ? (
+        <div className="peak-color-row" role="radiogroup" aria-label="ピークの色">
+          <span className="peak-color-title">ピークの色</span>
+          {PEAK_COLORS.map((item) => (
+            <button
+              key={item.id}
+              type="button"
+              role="radio"
+              aria-checked={color === item.id}
+              aria-label={item.nameJa}
+              title={item.nameJa}
+              className={color === item.id ? "peak-color is-active" : "peak-color"}
+              data-color={item.id}
+              onClick={() => onColor(item.id)}
+            />
+          ))}
+        </div>
+      ) : null}
       <p className="note memo-count">
         {scope === "peak" ? "このピークに付けたメモ" : "この2つのピークの間に付けたメモ"}（{memos.length} /{" "}
         {MAX_MEMOS_PER_PEAK}）。候補が複数あるときは、続けて追加できます。

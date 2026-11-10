@@ -110,6 +110,7 @@ export function Calculator({ acids, mode, tokens, onMode, onTokens }: Props) {
                 key={card.key}
                 type="button"
                 className="calc-key is-acid"
+                data-code={card.code}
                 aria-label={`${card.acid.nameJa} ${card.acid.residueMass}`}
                 onClick={() => onTokens(pressAcid(tokens, card.code, card.acid.residueMass))}
               >
@@ -171,7 +172,7 @@ function TokenView({ token }: { token: Token }) {
   if (token.kind === "op") return <span className="calc-op">{token.op}</span>;
   if (token.kind === "acid") {
     return (
-      <span className="calc-chip" title={`${token.mass}`}>
+      <span className="calc-chip" data-code={token.code} title={`${token.mass}`}>
         {token.code}
       </span>
     );

@@ -1,22 +1,39 @@
 :root {
   color-scheme: light;
-  --paper: #f3efe6;
-  --ink: #1d2430;
-  --muted: #5c6573;
-  --line: #ddd4c6;
-  --panel: #fffdf8;
+  /* テーマは緑系。紙と枠もわずかに緑へ寄せる。 */
+  --paper: #edf5ea;
+  --ink: #17261d;
+  --muted: #55665b;
+  --line: #cddccb;
+  --panel: #fbfefa;
   --left: #1f4e79;
   --right: #8d3d32;
   --intact: #6d5e49;
-  --focus: #f6e2ae;
-  --accent: #0f6a5c;
+  --focus: #fbe7a1;
+  --accent: #1f8f55;
+  --accent-deep: #136a3d;
+  --accent-soft: #dff1e3;
   --guide: #d21f2a;
   --arrow: #d4620a;
   --between: #1d63d6;
-  --good: #1e6b3c;
-  --bad: #8d3030;
+  --good: #1c7c43;
+  --bad: #b23a3a;
   --instrument: #16202b;
-  font-family: "Yu Gothic UI", "Hiragino Sans", "Noto Sans JP", sans-serif;
+  /* ピークに付ける色。黒以外はやや薄め。 */
+  --peak-blue: #5b9bea;
+  --peak-green: #45b877;
+  --peak-orange: #f29a3f;
+  --peak-pink: #f083b4;
+  --peak-purple: #a487e8;
+  /* 練習問題の難しさ（残基数）ごとの色味。 */
+  --level-1: #37a56b;
+  --level-2: #1c9a9a;
+  --level-3: #3c7fd0;
+  --level-4: #8a63cf;
+  --level-5: #d6557f;
+  font-family: "Zen Maru Gothic", "Hiragino Maru Gothic ProN", "Yu Gothic UI", "Hiragino Sans",
+    "Noto Sans JP", sans-serif;
+  font-weight: 500;
   line-height: 1.6;
 }
 
@@ -27,7 +44,8 @@
 body {
   margin: 0;
   background:
-    radial-gradient(circle at top left, rgba(15, 106, 92, 0.08), transparent 28rem),
+    radial-gradient(circle at top left, rgba(31, 143, 85, 0.14), transparent 30rem),
+    radial-gradient(circle at bottom right, rgba(31, 143, 85, 0.07), transparent 26rem),
     var(--paper);
   color: var(--ink);
 }
@@ -61,7 +79,13 @@ summary:focus-visible {
 h1 {
   margin: 0.2rem 0 0.8rem;
   font-size: 1.8rem;
+  font-weight: 900;
   line-height: 1.3;
+}
+
+h2,
+strong {
+  font-weight: 700;
 }
 
 h2 {
@@ -91,8 +115,15 @@ h2 {
 }
 
 .primary {
-  background: var(--accent);
+  background: linear-gradient(180deg, #2aa867, var(--accent));
   color: white;
+  font-weight: 700;
+  box-shadow: 0 0.16rem 0 var(--accent-deep);
+}
+
+.primary:active {
+  transform: translateY(0.1rem);
+  box-shadow: 0 0.06rem 0 var(--accent-deep);
 }
 
 .secondary,
@@ -460,7 +491,7 @@ h2 {
 }
 
 .spectrum-scale span:last-child {
-  transform: translateX(-100%);
+  transform: translateX(-50%);
 }
 
 .spectrum-ends {
@@ -537,6 +568,35 @@ h2 {
 .slot-filled {
   border-color: var(--accent);
   box-shadow: inset 0 0 0 2px var(--accent);
+}
+
+/* アミノ酸のカードは、性質の色で縁取り、うすく色を敷く。 */
+.card[data-code] {
+  border: 2px solid transparent;
+  border-bottom-width: 0.42rem;
+  background:
+    linear-gradient(
+        color-mix(in srgb, var(--aa) 13%, var(--panel)),
+        color-mix(in srgb, var(--aa) 13%, var(--panel))
+      )
+      padding-box,
+    var(--aa-bg, var(--aa)) border-box;
+}
+
+.card[data-code] .card-code {
+  color: color-mix(in srgb, var(--aa) 68%, #0d1711);
+}
+
+.card[data-code].is-selected {
+  border-color: transparent;
+  background:
+    linear-gradient(
+        color-mix(in srgb, var(--aa) 32%, var(--panel)),
+        color-mix(in srgb, var(--aa) 32%, var(--panel))
+      )
+      padding-box,
+    var(--aa-bg, var(--aa)) border-box;
+  box-shadow: 0 0 0 3px var(--panel), 0 0 0 6px var(--ink);
 }
 
 .card-code {
@@ -621,26 +681,43 @@ h2 {
   align-items: center;
 }
 
-.bead[data-code="G"] { background: #0f6a5c; }
-.bead[data-code="A"] { background: #c47b12; }
-.bead[data-code="S"] { background: #1f4e79; }
-.bead[data-code="P"] { background: #6d3d7a; }
-.bead[data-code="V"] { background: #3d6b32; }
-.bead[data-code="T"] { background: #a33b4a; }
-.bead[data-code="C"] { background: #3e6b8a; }
-.bead[data-code="I"] { background: #8a5a12; }
-.bead[data-code="L"] { background: #3f6b4a; }
-.bead[data-code="N"] { background: #6b4a2a; }
-.bead[data-code="D"] { background: #9a3d5c; }
-.bead[data-code="Q"] { background: #3a5a78; }
-.bead[data-code="K"] { background: #245c4a; }
-.bead[data-code="E"] { background: #0e6b8a; }
-.bead[data-code="M"] { background: #5c4d8a; }
-.bead[data-code="H"] { background: #8a3d2f; }
-.bead[data-code="F"] { background: #2c5e4a; }
-.bead[data-code="R"] { background: #7a2f4a; }
-.bead[data-code="Y"] { background: #8a6a14; }
-.bead[data-code="W"] { background: #3d3a6b; }
+/*
+ * アミノ酸の色。性質ごとに色の系統を分け、その中で濃さと色相を少しずつ変える。
+ * 疎水性＝青、芳香族＝紫、酸性＝緑、塩基性＝橙、そのほかの親水性＝桃。
+ */
+[data-code="G"] { --aa: #4f93dc; }
+[data-code="A"] { --aa: #3a80d2; }
+[data-code="V"] { --aa: #2f6fc2; }
+[data-code="L"] { --aa: #2a5fae; }
+[data-code="I"] { --aa: #3a55a8; }
+[data-code="P"] { --aa: #2587b3; }
+[data-code="M"] { --aa: #1f4b84; }
+[data-code="F"] { --aa: #8d5ccb; }
+[data-code="Y"] { --aa: #a650bf; }
+[data-code="W"] { --aa: #6845a6; }
+[data-code="D"] { --aa: #2d9a57; }
+[data-code="E"] { --aa: #1c7f6b; }
+[data-code="K"] { --aa: #d6701a; }
+[data-code="R"] { --aa: #bd4f14; }
+[data-code="H"] { --aa: #b67a10; }
+[data-code="S"] { --aa: #df6396; }
+[data-code="T"] { --aa: #cf4c7c; }
+[data-code="N"] { --aa: #d45cb1; }
+[data-code="Q"] { --aa: #bd438c; }
+[data-code="C"] { --aa: #dc5a76; }
+/* 同じ質量の組は、2つの色を斜めに分けて見せる。 */
+[data-code="L/I"] {
+  --aa: #2a5fae;
+  --aa-bg: linear-gradient(135deg, #2a5fae 0 50%, #3a55a8 50% 100%);
+}
+[data-code="K/Q"] {
+  --aa: #c85a4c;
+  --aa-bg: linear-gradient(135deg, #d6701a 0 50%, #bd438c 50% 100%);
+}
+
+.bead[data-code] {
+  background: var(--aa-bg, var(--aa, var(--muted)));
+}
 
 .bead.is-cap {
   width: 1.7rem;
@@ -967,7 +1044,7 @@ h2 {
 
 .science {
   margin-top: 1rem;
-  background: #f7f3ea;
+  background: color-mix(in srgb, var(--accent-soft) 55%, var(--panel));
 }
 
 .actions {
@@ -1744,4 +1821,672 @@ h2 {
   color: var(--muted);
   font-size: 0.85rem;
   line-height: 1.35;
+}
+
+/* ===== ピークの色 ===== */
+.peak-line[data-color="blue"] { background: var(--peak-blue); }
+.peak-line[data-color="green"] { background: var(--peak-green); }
+.peak-line[data-color="orange"] { background: var(--peak-orange); }
+.peak-line[data-color="pink"] { background: var(--peak-pink); }
+.peak-line[data-color="purple"] { background: var(--peak-purple); }
+
+.peak-line[data-color] {
+  width: 4px;
+}
+
+/* 質量の数字にも、同じ色のマーカーを引く（矢印で離れていても分かるように）。 */
+.peak-mass[data-color="blue"] { --mark: var(--peak-blue); }
+.peak-mass[data-color="green"] { --mark: var(--peak-green); }
+.peak-mass[data-color="orange"] { --mark: var(--peak-orange); }
+.peak-mass[data-color="pink"] { --mark: var(--peak-pink); }
+.peak-mass[data-color="purple"] { --mark: var(--peak-purple); }
+
+.peak-mass[data-color] .peak-value {
+  padding: 0 0.12em;
+  border-radius: 0.2em;
+  background: linear-gradient(transparent 55%, color-mix(in srgb, var(--mark) 70%, transparent) 55%);
+}
+
+.peak-color-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem;
+  margin: 0.7rem 0 0.2rem;
+}
+
+.peak-color-title {
+  margin-right: 0.2rem;
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.peak-color {
+  width: 2.25rem;
+  height: 2.25rem;
+  padding: 0;
+  border: 2px solid var(--panel);
+  border-radius: 999px;
+  background: var(--swatch);
+  box-shadow: 0 0 0 1px var(--line);
+}
+
+.peak-color[data-color="black"] { --swatch: var(--ink); }
+.peak-color[data-color="blue"] { --swatch: var(--peak-blue); }
+.peak-color[data-color="green"] { --swatch: var(--peak-green); }
+.peak-color[data-color="orange"] { --swatch: var(--peak-orange); }
+.peak-color[data-color="pink"] { --swatch: var(--peak-pink); }
+.peak-color[data-color="purple"] { --swatch: var(--peak-purple); }
+
+.peak-color.is-active {
+  box-shadow: 0 0 0 3px var(--ink);
+}
+
+/* 間のメモは、線が後ろを通っても文字が読めるように地を敷く。 */
+.range-note {
+  padding: 0 0.28rem;
+  background: var(--panel);
+  border-radius: 0.3rem;
+}
+
+/* ===== アミノ酸の色分け（電卓・凡例） ===== */
+.calc-key.is-acid[data-code] {
+  border: 1px solid color-mix(in srgb, var(--aa) 45%, var(--panel));
+  border-bottom: 0.28rem solid var(--aa);
+  background: color-mix(in srgb, var(--aa) 12%, var(--panel));
+}
+
+.calc-key.is-acid[data-code] .calc-acid-code {
+  color: color-mix(in srgb, var(--aa) 68%, #0d1711);
+}
+
+.calc-chip[data-code] {
+  background: color-mix(in srgb, var(--aa) 24%, var(--panel));
+}
+
+.aa-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.2rem 0.9rem;
+  list-style: none;
+  margin: 0.8rem 0 0;
+  padding: 0;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.aa-legend li {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.aa-legend li::before {
+  content: "";
+  width: 0.8rem;
+  height: 0.8rem;
+  border-radius: 0.25rem;
+  background: var(--group);
+}
+
+.aa-legend [data-group="hydrophobic"] { --group: #2f6fc2; }
+.aa-legend [data-group="aromatic"] { --group: #8d5ccb; }
+.aa-legend [data-group="acidic"] { --group: #2d9a57; }
+.aa-legend [data-group="basic"] { --group: #d6701a; }
+.aa-legend [data-group="polar"] { --group: #df6396; }
+
+/* ===== 正解の演出 ===== */
+.celebrate {
+  margin-top: 0.6rem;
+  cursor: pointer;
+}
+
+.celebrate.is-done {
+  cursor: default;
+}
+
+.celebrate .spectrum-plot {
+  height: clamp(13rem, 36vh, 19rem);
+}
+
+.celebrate-chain {
+  margin-bottom: 0.6rem;
+}
+
+.celebrate-chain .peptide-chain {
+  margin: 0.3rem 0 0.4rem;
+}
+
+.celebrate-chain .bead[data-code] {
+  animation: bead-pop 0.38s cubic-bezier(0.3, 1.7, 0.5, 1) both;
+}
+
+@keyframes bead-pop {
+  0% {
+    transform: scale(0.2) translateY(-0.6rem);
+    opacity: 0;
+  }
+  100% {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+.peak-hit.is-lit .peak-line {
+  width: 4px;
+  background: var(--accent);
+  box-shadow: 0 0 0.5rem color-mix(in srgb, var(--accent) 45%, transparent);
+}
+
+.peak-mass.is-lit .peak-value {
+  color: var(--accent-deep);
+}
+
+.peak-hit.is-flash .peak-line {
+  animation: peak-flash 0.62s ease-out both;
+}
+
+@keyframes peak-flash {
+  0% {
+    background: #fff3a6;
+    box-shadow: 0 0 0 0 rgba(255, 205, 60, 0.95);
+  }
+  35% {
+    background: #ffc93d;
+    box-shadow: 0 0 1.1rem 0.5rem rgba(255, 205, 60, 0.9);
+  }
+  100% {
+    background: var(--accent);
+    box-shadow: 0 0 0.5rem color-mix(in srgb, var(--accent) 45%, transparent);
+  }
+}
+
+.clear-stamp {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+}
+
+.clear-stamp svg {
+  width: min(98%, 33rem);
+  height: auto;
+  overflow: visible;
+  filter: drop-shadow(0 0.55rem 0.7rem rgba(10, 40, 24, 0.32));
+  animation: stamp-in 0.72s cubic-bezier(0.2, 1.5, 0.4, 1) both;
+}
+
+.clear-layer {
+  font: italic 900 150px "Arial Black", "Segoe UI Black", "Hiragino Sans", "Noto Sans JP", sans-serif;
+  text-anchor: middle;
+  paint-order: stroke;
+  stroke-linejoin: round;
+}
+
+.clear-layer.is-shadow {
+  fill: #0a3d24;
+  stroke: #0a3d24;
+  stroke-width: 36;
+  opacity: 0.45;
+}
+
+.clear-layer.is-outer {
+  fill: #0e5a34;
+  stroke: #0e5a34;
+  stroke-width: 36;
+}
+
+.clear-layer.is-mid {
+  fill: #ffffff;
+  stroke: #ffffff;
+  stroke-width: 17;
+}
+
+.clear-layer.is-fill {
+  stroke: #c2570c;
+  stroke-width: 3;
+}
+
+.clear-spark {
+  fill: #ffe45c;
+  stroke: #ffffff;
+  stroke-width: 3;
+  stroke-linejoin: round;
+  animation: spark-twinkle 1.1s ease-in-out infinite alternate both;
+}
+
+@keyframes stamp-in {
+  0% {
+    transform: scale(2.7) rotate(-16deg);
+    opacity: 0;
+  }
+  55% {
+    transform: scale(0.9) rotate(-6deg);
+    opacity: 1;
+  }
+  78% {
+    transform: scale(1.06) rotate(-6deg);
+  }
+  100% {
+    transform: scale(1) rotate(-6deg);
+    opacity: 1;
+  }
+}
+
+@keyframes spark-twinkle {
+  0% {
+    transform: scale(0.25) rotate(0deg);
+    opacity: 0.2;
+  }
+  100% {
+    transform: scale(1) rotate(45deg);
+    opacity: 1;
+  }
+}
+
+/* 次へ進むボタンを大きく目立たせる。 */
+.next-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.7rem;
+  margin: 1rem 0;
+}
+
+.next-big {
+  flex: 1 1 14rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.7rem;
+  min-height: 4.2rem;
+  padding: 0.6rem 1.6rem;
+  font-size: 1.4rem;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  box-shadow:
+    0 0.32rem 0 var(--accent-deep),
+    0 0.7rem 1.3rem rgba(31, 143, 85, 0.32);
+}
+
+.next-big:active {
+  transform: translateY(0.2rem);
+  box-shadow:
+    0 0.12rem 0 var(--accent-deep),
+    0 0.3rem 0.7rem rgba(31, 143, 85, 0.3);
+}
+
+.next-big.is-clear {
+  animation: next-pulse 1.5s ease-in-out 1.2s infinite;
+}
+
+.next-arrow {
+  width: 0;
+  height: 0;
+  border-top: 0.55rem solid transparent;
+  border-bottom: 0.55rem solid transparent;
+  border-left: 0.85rem solid currentColor;
+}
+
+.next-side {
+  flex: 0 0 auto;
+  min-height: 4.2rem;
+  padding-inline: 1.4rem;
+}
+
+@keyframes next-pulse {
+  0%,
+  100% {
+    transform: none;
+  }
+  50% {
+    transform: scale(1.025);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .celebrate-chain .bead[data-code],
+  .peak-hit.is-flash .peak-line,
+  .clear-stamp svg,
+  .clear-spark,
+  .next-big.is-clear {
+    animation: none;
+  }
+
+  .clear-stamp svg {
+    transform: rotate(-6deg);
+  }
+}
+
+/* ===== ホーム：進み具合・つづきから・難しさ ===== */
+.home-head {
+  display: grid;
+  gap: 1rem;
+  align-items: center;
+}
+
+@media (min-width: 720px) {
+  .home-head {
+    grid-template-columns: 1fr auto;
+  }
+}
+
+.home-title h1 {
+  font-size: clamp(2rem, 6vw, 2.7rem);
+}
+
+.home-lead {
+  margin: 0;
+}
+
+.home-progress {
+  min-width: 15rem;
+  padding: 0.8rem 1.1rem 0.9rem;
+  border: 1px solid var(--line);
+  border-radius: 1.2rem;
+  background: var(--panel);
+}
+
+.progress-title {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.progress-count {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  margin: 0;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+
+.progress-count strong {
+  font-size: 3.4rem;
+  font-weight: 900;
+  color: var(--accent);
+}
+
+.progress-count span {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.progress-bar {
+  height: 0.7rem;
+  margin: 0.35rem 0 0.4rem;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  overflow: hidden;
+}
+
+.progress-bar span {
+  display: block;
+  height: 100%;
+  min-width: 0;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #47c07f, var(--accent));
+  transition: width 0.4s ease;
+}
+
+.progress-sub {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.resume-card {
+  --level: var(--accent);
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 1.2rem;
+  padding: 0.9rem 1rem;
+  border: 2px solid var(--accent);
+  border-radius: 1.3rem;
+  background: linear-gradient(120deg, var(--accent-soft), var(--panel) 60%);
+  box-shadow: 0 0.4rem 1rem rgba(31, 143, 85, 0.14);
+}
+
+.resume-thumb {
+  flex: 0 0 clamp(6.5rem, 26vw, 11rem);
+  border: 1px solid var(--line);
+  border-radius: 0.8rem;
+  background: var(--panel);
+  overflow: hidden;
+}
+
+.resume-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.resume-kicker {
+  margin: 0;
+  color: var(--accent-deep);
+  font-size: 0.95rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+}
+
+.resume-title {
+  margin: 0 0 0.55rem;
+  font-size: 1.2rem;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.resume-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.resume-go {
+  min-height: 3.3rem;
+  padding-inline: 1.6rem;
+  font-size: 1.1rem;
+}
+
+[data-level="1"] { --level: var(--level-1); }
+[data-level="2"] { --level: var(--level-2); }
+[data-level="3"] { --level: var(--level-3); }
+[data-level="4"] { --level: var(--level-4); }
+[data-level="5"] { --level: var(--level-5); }
+
+.practice-stage {
+  border-top: 0.4rem solid var(--level);
+}
+
+.practice-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.3rem 0.8rem;
+}
+
+.practice-name {
+  font-size: 1.25rem;
+}
+
+.practice-score {
+  margin-left: auto;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+.stars {
+  display: inline-flex;
+  gap: 0.05em;
+  font-size: 1.05rem;
+  line-height: 1;
+  letter-spacing: 0;
+}
+
+.star {
+  color: var(--line);
+}
+
+.star.is-on {
+  color: var(--level);
+}
+
+.practice-stage .tile-thumb {
+  background: color-mix(in srgb, var(--level) 9%, var(--panel));
+}
+
+.practice-stage .tile-number {
+  color: color-mix(in srgb, var(--level) 75%, #0d1711);
+}
+
+.problem-tile.is-next {
+  border-color: var(--level);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--level) 35%, transparent);
+}
+
+.tile-next {
+  position: absolute;
+  top: 0.3rem;
+  left: 0.3rem;
+  padding: 0 0.55rem;
+  border-radius: 999px;
+  background: var(--level);
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1.6;
+}
+
+/* ===== 並べ方の説明は、たたんでおく ===== */
+.builder-ends {
+  margin: 0 0 0.2rem;
+}
+
+.howto summary {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.4rem;
+  color: var(--accent-deep);
+  cursor: pointer;
+}
+
+.howto p {
+  margin: 0 0 0.4rem;
+}
+
+.answer-panel > .primary {
+  min-height: 3.4rem;
+  padding-inline: 2rem;
+  font-size: 1.1rem;
+}
+
+/* ===== スマホの縦持ち ===== */
+@media (max-width: 560px) {
+  .app {
+    width: calc(100% - 1.5rem);
+    padding-top: 1rem;
+  }
+
+  /* カードは6列に詰め、記号と質量だけを見せる（名前は読み上げ用に残す）。 */
+  .tray {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 0.35rem;
+  }
+
+  .tray .card {
+    min-width: 0;
+    min-height: 3.3rem;
+    padding: 0.2rem 0.1rem;
+    border-bottom-width: 0.32rem;
+    border-radius: 0.7rem;
+  }
+
+  .tray .card-code {
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+    font-size: 1.2rem;
+    line-height: 1.15;
+  }
+
+  .tray .card-mass {
+    font-size: 0.72rem;
+    font-weight: 500;
+  }
+
+  .tray .card-name {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .tray .card {
+    position: relative;
+  }
+
+  .answer-panel > .primary {
+    width: 100%;
+  }
+
+  .answer-tools {
+    gap: 0.5rem;
+    margin-bottom: 0.6rem;
+  }
+
+  .hint {
+    flex-basis: 100%;
+    min-width: 0;
+  }
+
+  .hint summary {
+    min-height: 2.4rem;
+  }
+
+  .progress-count strong {
+    font-size: 2.8rem;
+  }
+
+  .resume-card {
+    align-items: flex-start;
+    padding: 0.8rem;
+  }
+
+  .resume-go {
+    flex: 1 1 100%;
+  }
+
+  .problem-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.6rem;
+  }
+
+  .next-big {
+    font-size: 1.25rem;
+  }
+}
+
+/* 結果のペプチドは、スマホでも7残基が1行に収まる大きさにする。 */
+@media (max-width: 560px) {
+  .result-peptide .bead:not(.is-cap) {
+    width: 2.05rem;
+    height: 2.05rem;
+    font-size: 0.95rem;
+  }
+
+  .result-peptide .bead-cap {
+    height: 2.05rem;
+  }
+
+  .result-peptide .bead-bond {
+    width: calc(0.42rem + 4px);
+    margin-top: calc(1.025rem - 1.5px);
+  }
 }

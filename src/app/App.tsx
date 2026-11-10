@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { aminoAcids } from "../data/aminoAcids.ts";
 import { briefings } from "../data/briefings.ts";
 import { practiceProblems, practiceStages } from "../data/practice.ts";
@@ -46,6 +46,13 @@ export function App() {
   const [drafts, setDrafts] = useState<Record<string, AnswerDraft>>({});
   const [notice, setNotice] = useState<string | null>(null);
   const [practiceResults, setPracticeResults] = useState<PracticeResults>(loadPracticeResults);
+
+  // 画面が変わったら、いちばん上から見せる（下のほうで回答しても、結果の演出が見えるように）。
+  const routeKey =
+    route.name === "home" ? "home" : route.name === "briefing" ? route.briefingId : `${route.name}:${route.problemId}`;
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [routeKey]);
 
   function remember(next: Progress) {
     setProgress(next);
@@ -194,6 +201,7 @@ export function App() {
       practiceStages={practiceStages}
       practiceProblems={practiceProblems}
       practiceResults={practiceResults}
+      lastProblemId={progress.lastProblemId}
       onReset={() => {
         remember(emptyProgress);
         setPracticeResults({});

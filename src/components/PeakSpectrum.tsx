@@ -1,6 +1,6 @@
-import { useLayoutEffect, useRef, useState } from "react";
+import { useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { fragmentLabel } from "../game/labels.ts";
-import type { FragmentMemo, Peak } from "../game/types.ts";
+import type { FragmentMemo, Peak, PeakColor } from "../game/types.ts";
 import { FragmentLabel } from "./FragmentLabel.tsx";
 
 /** 2つのピークの間のメモ。fromId は質量の小さいほう。 */
@@ -17,6 +17,14 @@ type Props = {
   notes?: Record<string, readonly FragmentMemo[]>;
   /** ピークの間のメモ。青で、隣のピークなら間に線を、そうでなければかすがい状につないで表示する。 */
   rangeNotes?: readonly RangeNote[];
+  /** ピークごとの色。ないピークは黒。 */
+  peakColors?: Record<string, PeakColor>;
+  /** 正解の演出で、光らせたままにするピーク。 */
+  litPeakIds?: readonly string[];
+  /** 正解の演出で、いま光ったピーク。 */
+  flashPeakIds?: readonly string[];
+  /** 図の上に重ねるもの（正解の演出の文字など）。 */
+  overlay?: ReactNode;
   /** 1回押して選択中のピーク（赤く表示する）。 */
   selectedPeakId?: string | null;
   onSelectRange?: (fromId: string, toId: string) => void;
@@ -50,6 +58,10 @@ export function PeakSpectrum({
   peaks,
   notes = {},
   rangeNotes = [],
+  peakColors = {},
+  litPeakIds = [],
+  flashPeakIds = [],
+  overlay,
   selectedPeakId = null,
   onSelectRange,
   onBlankClick,
@@ -62,6 +74,8 @@ export function PeakSpectrum({
   const plotRef = useRef<HTMLDivElement>(null);
   const [placements, setPlacements] = useState<Record<string, Placement>>({});
   const [rangeLayout, setRangeLayout] = useState<RangeLayout>(NO_RANGES);
+  // メモが多くてラベルが図の上にはみ出すとき、その分だけ図の上に余白を足す。
+  const [labelExtra, setLabelExtra] = useState(0);
   const axisMax = axisMaxFor(Math.max(...peaks.map((peak) => peak.mass), 1));
   const ticks = ticksFor(axisMax);
   const masses = [...peaks]
@@ -86,6 +100,8 @@ export function PeakSpectrum({
     const place = () => {
       const placed = placeMassLabels(plot);
       setPlacements(placed);
+      const highest = Math.min(0, ...Object.values(placed).map((item) => item.top));
+      setLabelExtra(Math.ceil(-highest) + (highest < 0 ? 4 : 0));
       setRangeLayout(placeRanges(plot, placed, rangeNotes, masses));
     };
     place();
@@ -106,7 +122,11 @@ export function PeakSpectrum({
     >
       <div
         className="spectrum-stage"
-        style={rangeLayout.extraTop > 0 ? { paddingTop: rangeLayout.extraTop } : undefined}
+        style={
+          Math.max(rangeLayout.extraTop, labelExtra) > 0
+            ? { paddingTop: Math.max(rangeLayout.extraTop, labelExtra) }
+            : undefined
+        }
       >
         <span className="intensity-label">強度</span>
         <div
@@ -128,6 +148,8 @@ export function PeakSpectrum({
               "peak-hit",
               guided.has(peak.id) ? "is-guided" : "",
               selectedPeakId === peak.id ? "is-selected" : "",
+              litPeakIds.includes(peak.id) ? "is-lit" : "",
+              flashPeakIds.includes(peak.id) ? "is-flash" : "",
             ]
               .filter(Boolean)
               .join(" ");
@@ -137,6 +159,7 @@ export function PeakSpectrum({
               <span
                 className="peak-line"
                 data-id={peak.id}
+                data-color={colorOf(peakColors, peak.id)}
                 style={{ height: `${peak.intensity * 70}%` }}
               />
             );
@@ -184,6 +207,7 @@ export function PeakSpectrum({
               "peak-mass",
               guided.has(peak.id) ? "is-guided" : "",
               selectedPeakId === peak.id ? "is-selected" : "",
+              litPeakIds.includes(peak.id) ? "is-lit" : "",
             ]
               .filter(Boolean)
               .join(" ");
@@ -209,7 +233,14 @@ export function PeakSpectrum({
               </>
             );
             return readOnly ? (
-              <span key={peak.id} className={className} data-id={peak.id} style={style} aria-label={label}>
+              <span
+                key={peak.id}
+                className={className}
+                data-id={peak.id}
+                data-color={colorOf(peakColors, peak.id)}
+                style={style}
+                aria-label={label}
+              >
                 {body}
               </span>
             ) : (
@@ -218,6 +249,7 @@ export function PeakSpectrum({
                 type="button"
                 className={className}
                 data-id={peak.id}
+                data-color={colorOf(peakColors, peak.id)}
                 style={style}
                 aria-label={label}
                 aria-pressed={selectedPeakId === peak.id}
@@ -261,6 +293,7 @@ export function PeakSpectrum({
               </button>
             );
           })}
+          {overlay}
         </div>
       </div>
       <div className="spectrum-scale">
@@ -284,6 +317,12 @@ export function PeakSpectrum({
       )}
     </figure>
   );
+}
+
+/** 黒は属性を付けない（色の指定がないときと同じ見た目）。 */
+function colorOf(colors: Record<string, PeakColor>, id: string): PeakColor | undefined {
+  const color = colors[id];
+  return color && color !== "black" ? color : undefined;
 }
 
 type Box = {
@@ -368,7 +407,7 @@ function placeMassLabels(plot: HTMLElement): Record<string, Placement> {
 const ARROW_GAP = 8;
 
 function liftClear(item: Box, placed: Box[], lines: readonly Box[], gap: number) {
-  for (let step = 0; step < 24; step += 1) {
+  for (let step = 0; step < 48; step += 1) {
     const obstacles = [
       ...placed.filter((other) => overlaps(item, other, 4)),
       ...lines.filter((line) => line.id !== item.id && overlaps(item, line, 2)),
@@ -376,8 +415,8 @@ function liftClear(item: Box, placed: Box[], lines: readonly Box[], gap: number)
     if (obstacles.length === 0) break;
     const nextY = Math.min(...obstacles.map((obstacle) => obstacle.y - item.h - gap));
     if (nextY >= item.y - 0.5) break;
-    item.y = Math.max(0, nextY);
-    if (item.y === 0) break;
+    // 図の上端で止めない。はみ出した分は、図の上の余白を広げて収める。
+    item.y = nextY;
   }
   placed.push(item);
 }
@@ -443,13 +482,16 @@ function placeRanges(
   }
 
   const obstacles: Box[] = [];
+  const labelBoxes: Box[] = [];
   const labelTop = new Map<string, number>();
   for (const label of plot.querySelectorAll<HTMLElement>(".peak-mass")) {
     const id = label.dataset.id ?? "";
     const where = placed[id];
     if (!where) continue;
     const rect = label.getBoundingClientRect();
-    obstacles.push({ id, x: where.left, y: where.top, w: rect.width, h: rect.height });
+    const labelBox = { id, x: where.left, y: where.top, w: rect.width, h: rect.height };
+    obstacles.push(labelBox);
+    labelBoxes.push(labelBox);
     labelTop.set(id, where.top);
     if (where.arrow) {
       obstacles.push({
@@ -527,10 +569,22 @@ function placeRanges(
     const base = Math.min(...obstacles.map((box) => box.y), ...staples.map((s) => Math.min(s.ta, s.tb))) - 12;
     staples.sort((p, q) => p.xb - p.xa - (q.xb - q.xa) || p.xa - q.xa);
     const spans: { level: number; from: number; to: number }[] = [];
-    for (const staple of staples) {
+    // かすがいの脚は、その位置にある一番上のラベル（質量やメモ）の上で止める。
+    // ほかのピークのメモが上に積まれていても、文字の上を線が通らない。
+    const legEnd = (x: number, own: number) => {
+      const tops = labelBoxes
+        .filter((box) => x >= box.x - 3 && x <= box.x + box.w + 3)
+        .map((box) => box.y);
+      return Math.min(own, ...tops) - 4;
+    };
+    const noteLeft = (staple: Staple) => {
       const mid = (staple.xa + staple.xb) / 2;
-      const from = Math.min(staple.xa, mid - staple.w / 2) - 6;
-      const to = Math.max(staple.xb, mid + staple.w / 2) + 6;
+      return Math.min(Math.max(0, mid - staple.w / 2), Math.max(0, plot.clientWidth - staple.w));
+    };
+    for (const staple of staples) {
+      const left = noteLeft(staple);
+      const from = Math.min(staple.xa, left) - 6;
+      const to = Math.max(staple.xb, left + staple.w) + 6;
       let level = 0;
       while (spans.some((span) => span.level === level && span.from < to && from < span.to)) level += 1;
       staple.level = level;
@@ -543,12 +597,11 @@ function placeRanges(
     for (const staple of staples) {
       const lift = heights.slice(0, staple.level).reduce((sum, value) => sum + value, 0);
       const barY = base - lift;
-      const mid = (staple.xa + staple.xb) / 2;
-      const left = Math.min(Math.max(0, mid - staple.w / 2), Math.max(0, plot.clientWidth - staple.w));
+      const left = noteLeft(staple);
       const top = barY - 3 - staple.h;
       extraTop = Math.max(extraTop, -top + 6);
-      const endA = Math.max(barY + 6, staple.ta - 3);
-      const endB = Math.max(barY + 6, staple.tb - 3);
+      const endA = Math.max(barY + 6, legEnd(staple.xa, staple.ta));
+      const endB = Math.max(barY + 6, legEnd(staple.xb, staple.tb));
       items.push({
         key: staple.range.key,
         left,

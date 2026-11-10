@@ -33,6 +33,7 @@ export function AminoAcidCard({
       className={className}
       aria-pressed={pressed}
       data-keep-selection={keepSelection ? "" : undefined}
+      data-code={acid.code}
       data-acid-key={acidKey}
       data-acid-code={acidKey ? acid.code : undefined}
       onClick={onClick}
