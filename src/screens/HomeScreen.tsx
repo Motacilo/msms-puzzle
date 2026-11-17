@@ -15,6 +15,7 @@ type Props = {
   onContinue: () => void;
   onOpen: (id: string) => void;
   onReset: () => void;
+  onOpenLicenses: () => void;
   /** 練習問題。ロックはなく、どれからでも始められる。 */
   practiceStages: readonly Stage[];
   practiceProblems: readonly Problem[];
@@ -49,6 +50,7 @@ export function HomeScreen({
   onContinue,
   onOpen,
   onReset,
+  onOpenLicenses,
   practiceStages,
   practiceProblems,
   practiceResults,
@@ -273,9 +275,14 @@ export function HomeScreen({
           );
         })}
       </div>
-      <button type="button" className="text-button" onClick={onReset}>
-        記録を消す
-      </button>
+      <p className="home-legal">
+        <button type="button" className="text-button" onClick={onOpenLicenses}>
+          ライセンス
+        </button>
+        <button type="button" className="text-button" onClick={onReset}>
+          記録を消す
+        </button>
+      </p>
     </main>
   );
 }

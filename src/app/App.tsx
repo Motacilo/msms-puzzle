@@ -18,6 +18,7 @@ import type { AnswerDraft, Judgment } from "../game/types.ts";
 import { AnalysisScreen } from "../screens/AnalysisScreen.tsx";
 import { BriefingScreen } from "../screens/BriefingScreen.tsx";
 import { HomeScreen } from "../screens/HomeScreen.tsx";
+import { LicensesScreen } from "../screens/LicensesScreen.tsx";
 import { ResultScreen } from "../screens/ResultScreen.tsx";
 import {
   loadPracticeResults,
@@ -30,6 +31,7 @@ type FinishedJudgment = Exclude<Judgment, { status: "incomplete" }>;
 
 type Route =
   | { name: "home" }
+  | { name: "licenses" }
   | { name: "briefing"; briefingId: string }
   | { name: "play"; problemId: string }
   | { name: "result"; problemId: string; judgment: FinishedJudgment };
@@ -103,6 +105,10 @@ export function App() {
     }
     setNotice(null);
     setRoute({ name: "result", problemId, judgment });
+  }
+
+  if (route.name === "licenses") {
+    return <LicensesScreen onHome={() => setRoute({ name: "home" })} />;
   }
 
   if (route.name === "briefing") {
@@ -209,6 +215,7 @@ export function App() {
         setDrafts({});
         setRoute({ name: "home" });
       }}
+      onOpenLicenses={() => setRoute({ name: "licenses" })}
     />
   );
 }

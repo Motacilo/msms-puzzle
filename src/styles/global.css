@@ -2490,3 +2490,28 @@ h2 {
     margin-top: calc(1.025rem - 1.5px);
   }
 }
+
+.home-legal {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.4rem 1.2rem;
+  margin: 1.4rem 0 0;
+}
+
+.license-page {
+  max-width: 40rem;
+}
+
+.license-page h1 {
+  margin-bottom: 0.4rem;
+}
+
+.license-page h2 {
+  margin: 1.4rem 0 0.3rem;
+  font-size: 1.2rem;
+}
+
+.license-page a {
+  color: var(--accent-deep);
+}
