@@ -1958,6 +1958,7 @@ h2 {
 /* ===== 正解の演出 ===== */
 .celebrate {
   position: relative;
+  overflow-x: clip;
   margin-top: 0.6rem;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
@@ -2095,7 +2096,7 @@ h2 {
 .miss-layer.is-fill { stroke: #8a1b14; stroke-width: 3; }
 
 @keyframes miss-in {
-  0% { transform: scale(2.2) rotate(8deg); opacity: 0; }
+  0% { transform: scale(1.5) rotate(8deg); opacity: 0; }
   50% { transform: scale(0.95) rotate(4deg); opacity: 1; }
   62% { transform: translateX(-0.5rem) rotate(4deg); }
   74% { transform: translateX(0.5rem) rotate(4deg); }
@@ -2190,7 +2191,7 @@ h2 {
 
 @keyframes stamp-in {
   0% {
-    transform: scale(2.7) rotate(-16deg);
+    transform: scale(1.7) rotate(-16deg);
     opacity: 0;
   }
   55% {
@@ -2657,6 +2658,7 @@ h2 {
 
 /* ===== 結果画面：判定の文字はスペクトルの上に出す ===== */
 .verdict-slot {
+  overflow: hidden;
   height: 7.2rem;
   margin-bottom: 0.4rem;
   display: grid;
@@ -2783,4 +2785,10 @@ a.text-button {
     order: 4;
     margin: 0.9rem 0 0;
   }
+}
+
+.result-home {
+  display: flex;
+  justify-content: flex-end;
+  margin: 0.4rem 0 1rem;
 }

@@ -99,6 +99,13 @@ export function ResultScreen({
         scienceNote={problem.scienceNote}
       />
       )}
+      {staged ? (
+        <p className="result-home">
+          <button type="button" className="text-button" onClick={onHome}>
+            ホーム
+          </button>
+        </p>
+      ) : null}
       {staged ? null : (
       <div className="actions">
         {nextProblemId ? (

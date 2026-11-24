@@ -164,6 +164,18 @@ export function ResultStage({ problem, acids, answer, verdict, onDone }: Props) 
     }, FLIGHT_MS);
   }
 
+  // 結果が出る画面は、上のホームや題名は隠れてよいので、判定と図が見える位置まで送る。
+  useEffect(() => {
+    const stage = stageRef.current;
+    if (!stage) return;
+    // 画面を切り替えたときの「先頭へ戻す」より後に動かす。
+    const timer = window.setTimeout(() => {
+      const top = stage.getBoundingClientRect().top + window.scrollY - 8;
+      window.scrollTo({ top: Math.max(0, top) });
+    }, 80);
+    return () => window.clearTimeout(timer);
+  }, [answerKey, problem.id]);
+
   useEffect(() => {
     if (prefersReducedMotion()) {
       finish();
