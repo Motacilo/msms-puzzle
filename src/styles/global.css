@@ -2745,3 +2745,42 @@ a.text-button {
   align-items: center;
   text-decoration: none;
 }
+
+/* 説明文は、スマホでは図の上（枠の外）に、広い画面では図の中に出す。 */
+.spectrum-note.is-outside {
+  display: none;
+}
+
+@media (max-width: 560px) {
+  .spectrum-note.is-inside {
+    display: none;
+  }
+
+  .spectrum-note.is-outside {
+    display: block;
+    margin: 0 0 0.45rem;
+  }
+
+  /* 答える欄：アミノ酸のカード → 回答する → ヒント・電卓・自由メモ の順にする。 */
+  .answer-panel {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .answer-panel > .builder {
+    order: 1;
+  }
+
+  .answer-panel > .notice {
+    order: 2;
+  }
+
+  .answer-panel > .primary {
+    order: 3;
+  }
+
+  .answer-panel > .answer-tools {
+    order: 4;
+    margin: 0.9rem 0 0;
+  }
+}

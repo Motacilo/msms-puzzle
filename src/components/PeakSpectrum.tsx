@@ -114,213 +114,222 @@ export function PeakSpectrum({
   }, [peakKey]);
 
   return (
-    <figure
-      className={[
-        "spectrum-figure",
-        compact ? "is-compact" : "",
-        guided.size > 0 ? "is-focus" : "",
-      ]
-        .filter(Boolean)
-        .join(" ")}
-    >
-      <div
-        className="spectrum-stage"
-        style={
-          Math.max(rangeLayout.extraTop, labelExtra) > 0
-            ? { paddingTop: Math.max(rangeLayout.extraTop, labelExtra) }
-            : undefined
-        }
+    <>
+        {readOnly ? null : (
+          <p className="spectrum-note is-outside">
+            {selectedPeakId
+              ? "もう一度押すとそのピークのメモ。別のピークを押すと、2つの間のメモ。"
+              : "ピークを1回押すと選択。もう1回でそのピークのメモ、別のピークを押すと間のメモ。"}
+          </p>
+        )}
+      <figure
+        className={[
+          "spectrum-figure",
+          compact ? "is-compact" : "",
+          guided.size > 0 ? "is-focus" : "",
+        ]
+          .filter(Boolean)
+          .join(" ")}
       >
-        <span className="intensity-label">強度</span>
         <div
-          className="spectrum-plot"
-          ref={plotRef}
-          onClick={(event) => {
-            if (event.target === event.currentTarget) onBlankClick?.();
-          }}
-          role="group"
-          aria-label={
-            readOnly
-              ? `質量スペクトル。左が軽く、右が重い。ピークの質量は ${masses}。`
-              : `質量スペクトル。左が軽く、右が重い。ピークの質量は ${masses}。線の高さは強度で、順番の判定には使いません。ピークを1回押すと選択、同じピークをもう1回押すとそのピークのメモ、別のピークを押すと2つのピークの間のメモを登録できます。`
+          className="spectrum-stage"
+          style={
+            Math.max(rangeLayout.extraTop, labelExtra) > 0
+              ? { paddingTop: Math.max(rangeLayout.extraTop, labelExtra) }
+              : undefined
           }
         >
-          {peaks.map((peak) => {
-            const note = notes[peak.id]?.length ? notes[peak.id] : undefined;
-            const className = [
-              "peak-hit",
-              guided.has(peak.id) ? "is-guided" : "",
-              selectedPeakId === peak.id ? "is-selected" : "",
-              litPeakIds.includes(peak.id) ? "is-lit" : "",
-              flashPeakIds.includes(peak.id) ? "is-flash" : "",
-              missPeakIds.includes(peak.id) ? "is-miss" : "",
-            ]
-              .filter(Boolean)
-              .join(" ");
-            const style = { left: `${(peak.mass / axisMax) * 100}%` };
-            const label = peakAria(peak, note, readOnly, selectedPeakId === peak.id);
-            const line = (
-              <span
-                className="peak-line"
-                data-id={peak.id}
-                data-color={colorOf(peakColors, peak.id)}
-                style={{ height: `${peak.intensity * 70}%` }}
-              />
-            );
-            return readOnly ? (
-              <span
-                key={peak.id}
-                className={className}
-                data-guided={guided.has(peak.id) ? "" : undefined}
-                style={style}
-                aria-label={label}
-              >
-                {line}
-              </span>
-            ) : (
-              <button
-                key={peak.id}
-                type="button"
-                className={className}
-                data-guided={guided.has(peak.id) ? "" : undefined}
-                style={style}
-                aria-label={label}
-                aria-pressed={selectedPeakId === peak.id}
-                onClick={() => onSelect?.(peak.id)}
-              >
-                {line}
-              </button>
-            );
-          })}
-          {peaks.map((peak) => {
-            const arrow = placements[peak.id]?.arrow;
-            if (!arrow) return null;
-            return (
-              <span
-                key={`${peak.id}-arrow`}
-                className="peak-arrow"
-                style={{ left: arrow.left, top: arrow.top, height: arrow.height }}
-                aria-hidden="true"
-              />
-            );
-          })}
-          {peaks.map((peak) => {
-            const placement = placements[peak.id];
-            const note = notes[peak.id]?.length ? notes[peak.id] : undefined;
-            const className = [
-              "peak-mass",
-              guided.has(peak.id) ? "is-guided" : "",
-              selectedPeakId === peak.id ? "is-selected" : "",
-              litPeakIds.includes(peak.id) ? "is-lit" : "",
-              missPeakIds.includes(peak.id) ? "is-miss" : "",
-            ]
-              .filter(Boolean)
-              .join(" ");
-            const style = placement
-              ? { left: placement.left, top: placement.top }
-              : { left: 0, top: 0, visibility: "hidden" as const };
-            const label = peakAria(peak, note, readOnly, selectedPeakId === peak.id);
-            const body = (
-              <>
-                {guided.has(peak.id) ? (
-                  <span className="peak-pointer" aria-hidden="true" />
-                ) : null}
-                {note ? (
-                  <span className="peak-note">
-                    {note.map((memo, index) => (
-                      <span key={index} className="peak-note-item">
-                        <FragmentLabel memo={memo} />
-                      </span>
-                    ))}
-                  </span>
-                ) : null}
-                <span className="peak-value">{peak.mass}</span>
-              </>
-            );
-            return readOnly ? (
-              <span
-                key={peak.id}
-                className={className}
-                data-id={peak.id}
-                data-color={colorOf(peakColors, peak.id)}
-                style={style}
-                aria-label={label}
-              >
-                {body}
-              </span>
-            ) : (
-              <button
-                key={peak.id}
-                type="button"
-                className={className}
-                data-id={peak.id}
-                data-color={colorOf(peakColors, peak.id)}
-                style={style}
-                aria-label={label}
-                aria-pressed={selectedPeakId === peak.id}
-                onClick={() => onSelect?.(peak.id)}
-              >
-                {body}
-              </button>
-            );
-          })}
-          <svg className="range-svg" aria-hidden="true">
-            {rangeLayout.items.map((item) => (
-              <path key={item.key} className="range-path" d={item.path} />
-            ))}
-          </svg>
-          {rangeNotes.map((range) => {
-            const item = rangeLayout.items.find((candidate) => candidate.key === range.key);
-            const style = item
-              ? { left: item.left, top: item.top }
-              : { left: 0, top: 0, visibility: "hidden" as const };
-            const text = range.memos.map(fragmentLabel).join("、");
-            const body = range.memos.map((memo, index) => (
-              <span key={index} className="range-note-line">
-                <FragmentLabel memo={memo} />
-              </span>
-            ));
-            return readOnly ? (
-              <span key={range.key} className="range-note" data-key={range.key} style={style}>
-                {body}
-              </span>
-            ) : (
-              <button
-                key={range.key}
-                type="button"
-                className="range-note"
-                data-key={range.key}
-                style={style}
-                aria-label={`2つのピークの間のメモ ${text}。編集`}
-                onClick={() => onSelectRange?.(range.fromId, range.toId)}
-              >
-                {body}
-              </button>
-            );
-          })}
-          {overlay}
+          <span className="intensity-label">強度</span>
+          <div
+            className="spectrum-plot"
+            ref={plotRef}
+            onClick={(event) => {
+              if (event.target === event.currentTarget) onBlankClick?.();
+            }}
+            role="group"
+            aria-label={
+              readOnly
+                ? `質量スペクトル。左が軽く、右が重い。ピークの質量は ${masses}。`
+                : `質量スペクトル。左が軽く、右が重い。ピークの質量は ${masses}。線の高さは強度で、順番の判定には使いません。ピークを1回押すと選択、同じピークをもう1回押すとそのピークのメモ、別のピークを押すと2つのピークの間のメモを登録できます。`
+            }
+          >
+            {peaks.map((peak) => {
+              const note = notes[peak.id]?.length ? notes[peak.id] : undefined;
+              const className = [
+                "peak-hit",
+                guided.has(peak.id) ? "is-guided" : "",
+                selectedPeakId === peak.id ? "is-selected" : "",
+                litPeakIds.includes(peak.id) ? "is-lit" : "",
+                flashPeakIds.includes(peak.id) ? "is-flash" : "",
+                missPeakIds.includes(peak.id) ? "is-miss" : "",
+              ]
+                .filter(Boolean)
+                .join(" ");
+              const style = { left: `${(peak.mass / axisMax) * 100}%` };
+              const label = peakAria(peak, note, readOnly, selectedPeakId === peak.id);
+              const line = (
+                <span
+                  className="peak-line"
+                  data-id={peak.id}
+                  data-color={colorOf(peakColors, peak.id)}
+                  style={{ height: `${peak.intensity * 70}%` }}
+                />
+              );
+              return readOnly ? (
+                <span
+                  key={peak.id}
+                  className={className}
+                  data-guided={guided.has(peak.id) ? "" : undefined}
+                  style={style}
+                  aria-label={label}
+                >
+                  {line}
+                </span>
+              ) : (
+                <button
+                  key={peak.id}
+                  type="button"
+                  className={className}
+                  data-guided={guided.has(peak.id) ? "" : undefined}
+                  style={style}
+                  aria-label={label}
+                  aria-pressed={selectedPeakId === peak.id}
+                  onClick={() => onSelect?.(peak.id)}
+                >
+                  {line}
+                </button>
+              );
+            })}
+            {peaks.map((peak) => {
+              const arrow = placements[peak.id]?.arrow;
+              if (!arrow) return null;
+              return (
+                <span
+                  key={`${peak.id}-arrow`}
+                  className="peak-arrow"
+                  style={{ left: arrow.left, top: arrow.top, height: arrow.height }}
+                  aria-hidden="true"
+                />
+              );
+            })}
+            {peaks.map((peak) => {
+              const placement = placements[peak.id];
+              const note = notes[peak.id]?.length ? notes[peak.id] : undefined;
+              const className = [
+                "peak-mass",
+                guided.has(peak.id) ? "is-guided" : "",
+                selectedPeakId === peak.id ? "is-selected" : "",
+                litPeakIds.includes(peak.id) ? "is-lit" : "",
+                missPeakIds.includes(peak.id) ? "is-miss" : "",
+              ]
+                .filter(Boolean)
+                .join(" ");
+              const style = placement
+                ? { left: placement.left, top: placement.top }
+                : { left: 0, top: 0, visibility: "hidden" as const };
+              const label = peakAria(peak, note, readOnly, selectedPeakId === peak.id);
+              const body = (
+                <>
+                  {guided.has(peak.id) ? (
+                    <span className="peak-pointer" aria-hidden="true" />
+                  ) : null}
+                  {note ? (
+                    <span className="peak-note">
+                      {note.map((memo, index) => (
+                        <span key={index} className="peak-note-item">
+                          <FragmentLabel memo={memo} />
+                        </span>
+                      ))}
+                    </span>
+                  ) : null}
+                  <span className="peak-value">{peak.mass}</span>
+                </>
+              );
+              return readOnly ? (
+                <span
+                  key={peak.id}
+                  className={className}
+                  data-id={peak.id}
+                  data-color={colorOf(peakColors, peak.id)}
+                  style={style}
+                  aria-label={label}
+                >
+                  {body}
+                </span>
+              ) : (
+                <button
+                  key={peak.id}
+                  type="button"
+                  className={className}
+                  data-id={peak.id}
+                  data-color={colorOf(peakColors, peak.id)}
+                  style={style}
+                  aria-label={label}
+                  aria-pressed={selectedPeakId === peak.id}
+                  onClick={() => onSelect?.(peak.id)}
+                >
+                  {body}
+                </button>
+              );
+            })}
+            <svg className="range-svg" aria-hidden="true">
+              {rangeLayout.items.map((item) => (
+                <path key={item.key} className="range-path" d={item.path} />
+              ))}
+            </svg>
+            {rangeNotes.map((range) => {
+              const item = rangeLayout.items.find((candidate) => candidate.key === range.key);
+              const style = item
+                ? { left: item.left, top: item.top }
+                : { left: 0, top: 0, visibility: "hidden" as const };
+              const text = range.memos.map(fragmentLabel).join("、");
+              const body = range.memos.map((memo, index) => (
+                <span key={index} className="range-note-line">
+                  <FragmentLabel memo={memo} />
+                </span>
+              ));
+              return readOnly ? (
+                <span key={range.key} className="range-note" data-key={range.key} style={style}>
+                  {body}
+                </span>
+              ) : (
+                <button
+                  key={range.key}
+                  type="button"
+                  className="range-note"
+                  data-key={range.key}
+                  style={style}
+                  aria-label={`2つのピークの間のメモ ${text}。編集`}
+                  onClick={() => onSelectRange?.(range.fromId, range.toId)}
+                >
+                  {body}
+                </button>
+              );
+            })}
+            {overlay}
+          </div>
         </div>
-      </div>
-      <div className="spectrum-scale">
-        {ticks.map((tick) => (
-          <span key={tick} style={{ left: `${(tick / axisMax) * 100}%` }}>
-            {tick}
-          </span>
-        ))}
-      </div>
-      <div className="spectrum-ends">
-        <span>軽い</span>
-        <span className="spectrum-arrow" aria-hidden="true" />
-        <span>重い</span>
-      </div>
-      {readOnly ? null : (
-        <p className="spectrum-note">
-          {selectedPeakId
-            ? "もう一度押すとそのピークのメモ。別のピークを押すと、2つの間のメモ。"
-            : "ピークを1回押すと選択。もう1回でそのピークのメモ、別のピークを押すと間のメモ。"}
-        </p>
-      )}
-    </figure>
+        <div className="spectrum-scale">
+          {ticks.map((tick) => (
+            <span key={tick} style={{ left: `${(tick / axisMax) * 100}%` }}>
+              {tick}
+            </span>
+          ))}
+        </div>
+        <div className="spectrum-ends">
+          <span>軽い</span>
+          <span className="spectrum-arrow" aria-hidden="true" />
+          <span>重い</span>
+        </div>
+        {readOnly ? null : (
+          <p className="spectrum-note is-inside">
+            {selectedPeakId
+              ? "もう一度押すとそのピークのメモ。別のピークを押すと、2つの間のメモ。"
+              : "ピークを1回押すと選択。もう1回でそのピークのメモ、別のピークを押すと間のメモ。"}
+          </p>
+        )}
+      </figure>
+    </>
   );
 }
 
