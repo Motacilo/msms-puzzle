@@ -4,10 +4,12 @@ import selectUrl from "../assets/se/決定ボタンを押す48.mp3";
 import deleteUrl from "../assets/se/決定ボタンを押す50.mp3";
 import calcUrl from "../assets/se/カーソル移動4.mp3";
 import whooshUrl from "../assets/se/剣の素振り3.mp3";
+import cancelUrl from "../assets/se/キャンセル4.mp3";
+import matchUrl from "../assets/se/決定ボタンを押す46.mp3";
 import correctUrl from "../assets/se/クイズ正解1.mp3";
 import incorrectUrl from "../assets/se/クイズ不正解1.mp3";
 
-export type SoundName = "button" | "select" | "fill" | "delete" | "calc" | "whoosh" | "correct" | "incorrect";
+export type SoundName = "button" | "select" | "fill" | "delete" | "calc" | "whoosh" | "match" | "vanish" | "correct" | "incorrect";
 
 /**
  * 効果音の一覧。gain は、4つの音の聞こえる大きさ（LUFS）がそろうように決めた倍率。
@@ -20,6 +22,8 @@ const SOUNDS: Record<SoundName, { url: string; gain: number }> = {
   delete: { url: deleteUrl, gain: 2.2 },
   calc: { url: calcUrl, gain: 1.5 },
   whoosh: { url: whooshUrl, gain: 1.2 },
+  match: { url: matchUrl, gain: 0.8 },
+  vanish: { url: cancelUrl, gain: 2.2 },
   correct: { url: correctUrl, gain: 0.55 },
   incorrect: { url: incorrectUrl, gain: 1 },
 };

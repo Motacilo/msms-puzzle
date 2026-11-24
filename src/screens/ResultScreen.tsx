@@ -1,5 +1,6 @@
 import { FeedbackPanel } from "../components/FeedbackPanel.tsx";
 import { ResultStage } from "../components/ResultStage.tsx";
+import { useState } from "react";
 import { explainSolution } from "../game/explainSolution.ts";
 import { residueLabel, sequenceLabel } from "../game/labels.ts";
 import {
@@ -53,6 +54,12 @@ export function ResultScreen({
   const correctLabel = answerText(problem, judgment.correct, acids);
   const correct = judgment.status === "correct";
   const staged = problem.type === "sequence-builder";
+  const stageKey = `${problem.id}:${answer.join("|")}`;
+  const [finishedKey, setFinishedKey] = useState<string | null>(null);
+  // 並べて答える問題は、演出が終わるまで両方のボタンを白にする。
+  const finished = !staged || finishedKey === stageKey;
+  const goClass = finished && correct ? "result-btn is-go" : "result-btn";
+  const retryClass = finished && !correct ? "result-btn is-retry" : "result-btn";
   const nextLabel = nextProblemId ? (nextIsBriefing ? "次の図へ" : "次の問題へ") : "ステージ選択へ";
 
   return (
@@ -70,22 +77,17 @@ export function ResultScreen({
           acids={acids}
           answer={answer}
           verdict={correct ? "correct" : "incorrect"}
+          onDone={() => setFinishedKey(stageKey)}
         />
       ) : null}
       <div className="next-row">
-        <button
-          type="button"
-          className={correct ? "primary next-big is-clear" : "primary next-big"}
-          onClick={nextProblemId ? onNext : onHome}
-        >
+        <button type="button" className={goClass} onClick={nextProblemId ? onNext : onHome}>
           <span>{nextLabel}</span>
           <span className="next-arrow" aria-hidden="true" />
         </button>
-        {correct ? null : (
-          <button type="button" className="secondary next-side" onClick={onRetry}>
-            もう一度
-          </button>
-        )}
+        <button type="button" className={retryClass} onClick={onRetry}>
+          もう一度
+        </button>
       </div>
       {staged ? null : (
       <FeedbackPanel

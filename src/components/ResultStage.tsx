@@ -14,6 +14,8 @@ type Props = {
   answer: readonly string[];
   /** 判定の結果。演出の最後に、この結果の文字と音を出す。 */
   verdict: "correct" | "incorrect";
+  /** 演出が終わった（飛ばした場合も含む）とき。 */
+  onDone?: () => void;
 };
 
 /** 最初のかけらが出るまで、かけらどうしの間隔、飛ぶ時間、最後のかけらのあと判定を出すまで（ミリ秒）。 */
@@ -30,7 +32,7 @@ type Point = { x: number; y: number };
  * 見えているピークと質量が合えばそのピークが光り、合わなければかけらは消える。
  * すべて終わったら、判定の結果（CLEAR! か MISS!）と音を出す。図を押すと最後まで飛ばせる。
  */
-export function ResultStage({ problem, acids, answer, verdict }: Props) {
+export function ResultStage({ problem, acids, answer, verdict, onDone }: Props) {
   const answerKey = answer.join("|");
   const peaks = useMemo(
     () => selectPeaks(buildPeptide(problem.sequence, acids).peaks, problem.shownPeakIds),
@@ -67,6 +69,7 @@ export function ResultStage({ problem, acids, answer, verdict }: Props) {
     setCut(null);
     setDone(true);
     settle();
+    onDone?.();
     if (!sounded.current) {
       sounded.current = true;
       playSound(verdict);
@@ -144,8 +147,10 @@ export function ResultStage({ problem, acids, answer, verdict }: Props) {
         // 合った：ピークの数字の上に残り、そのピークが光る。
         setLit((current) => [...new Set([...current, ...hit])]);
         setFlash(hit);
+        playSound("match");
       } else {
         // 合わなかった：その場で消える。
+        playSound("vanish");
         animations.current.push(
           pill.animate(
             [

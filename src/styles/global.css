@@ -2220,7 +2220,6 @@ h2 {
 /* 次へ進むボタンを大きく目立たせる。 */
 .next-row {
   display: flex;
-  flex-wrap: wrap;
   gap: 0.7rem;
   margin: 1rem 0;
 }
@@ -2680,6 +2679,63 @@ h2 {
 }
 
 /* ピークの数字の上に置いたかけらが、ペプチドに重ならないよう間をあける。 */
-.celebrate .result-peptide {
-  margin-bottom: 3.6rem;
+/* かけらは数字の上に置くので、結果画面では図の上にその分の余白を足し、かけらが枠から出ないようにする。 */
+.celebrate .spectrum-figure {
+  padding-top: 6.2rem;
+}
+
+/* 結果画面の2つのボタン：同じ大きさ。判定が出るまでは白、出たら正解は「次」が緑、不正解は「もう一度」が赤。 */
+.result-btn {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  min-height: 4.2rem;
+  padding: 0.6rem 0.8rem;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  color: var(--ink);
+  font-size: 1.25rem;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  box-shadow: 0 0.32rem 0 var(--line);
+  transition: background 0.25s, color 0.25s, box-shadow 0.25s;
+}
+
+.result-btn:active {
+  transform: translateY(0.2rem);
+  box-shadow: 0 0.12rem 0 var(--line);
+}
+
+.result-btn.is-go {
+  border-color: transparent;
+  background: linear-gradient(180deg, #2aa867, var(--accent));
+  color: #fff;
+  box-shadow:
+    0 0.32rem 0 var(--accent-deep),
+    0 0.7rem 1.3rem rgba(31, 143, 85, 0.32);
+  animation: next-pulse 1.5s ease-in-out 0.6s infinite;
+}
+
+.result-btn.is-retry {
+  border-color: transparent;
+  background: linear-gradient(180deg, #ee5a4f, #d23a30);
+  color: #fff;
+  box-shadow:
+    0 0.32rem 0 #9c231b,
+    0 0.7rem 1.3rem rgba(196, 42, 34, 0.3);
+}
+
+.result-btn.is-go:active,
+.result-btn.is-retry:active {
+  transform: translateY(0.2rem);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .result-btn.is-go {
+    animation: none;
+  }
 }
