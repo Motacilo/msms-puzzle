@@ -2739,3 +2739,9 @@ h2 {
     animation: none;
   }
 }
+
+a.text-button {
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+}

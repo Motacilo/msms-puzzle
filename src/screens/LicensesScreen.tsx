@@ -12,6 +12,15 @@ export function LicensesScreen({ onHome }: Props) {
       </p>
       <h1>ライセンス</h1>
       <p>このアプリが使っている画像、フォント、ライブラリです。</p>
+      <p>
+        <a href="https://motacilo.com/privacy/msms-puzzle.html" target="_blank" rel="noopener">
+          プライバシーポリシー
+        </a>
+        {"　"}
+        <a href="https://motacilo.com/terms/msms-puzzle.html" target="_blank" rel="noopener">
+          利用規約
+        </a>
+      </p>
 
       <h2>画像</h2>
       <p>

@@ -279,6 +279,22 @@ export function HomeScreen({
         <button type="button" className="text-button" onClick={onOpenLicenses}>
           ライセンス
         </button>
+        <a
+          className="text-button"
+          href="https://motacilo.com/privacy/msms-puzzle.html"
+          target="_blank"
+          rel="noopener"
+        >
+          プライバシー
+        </a>
+        <a
+          className="text-button"
+          href="https://motacilo.com/terms/msms-puzzle.html"
+          target="_blank"
+          rel="noopener"
+        >
+          利用規約
+        </a>
         <button type="button" className="text-button" onClick={onReset}>
           記録を消す
         </button>
