@@ -20,6 +20,16 @@ export function LicensesScreen({ onHome }: Props) {
         ChatGPT で作成しました。スペクトルやアミノ酸の玉など、ほかの図はコードで描いています。
       </p>
 
+      <h2>効果音</h2>
+      <p>
+        <strong>効果音ラボ</strong>
+        <br />
+        ボタンの音、正解・不正解の音、アミノ酸が枠に入る音に、効果音ラボの素材を使っています。
+      </p>
+      <p>
+        <a href="https://soundeffect-lab.info/">https://soundeffect-lab.info/</a>
+      </p>
+
       <h2>フォント</h2>
       <p>SIL Open Font License 1.1。Google Fonts から読み込んでいます。</p>
       <p>

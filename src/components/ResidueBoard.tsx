@@ -1,5 +1,6 @@
 import { Fragment, useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import { AminoAcidCard } from "./AminoAcidCard.tsx";
+import { playSound } from "../audio/sound.ts";
 import { residueLabel } from "../game/labels.ts";
 import { trayCards } from "../game/tray.ts";
 import type { AminoAcid } from "../game/types.ts";
@@ -143,6 +144,8 @@ export function ResidueBoard({
     const next = [...slotsRef.current];
     if (index < 0 || index >= next.length) return;
     next[index] = next[index] === code ? null : code;
+    // 枠にアミノ酸が入ったとき（同じアミノ酸を合わせて空にしたときは鳴らさない）。
+    if (next[index] !== null) playSound("fill");
     commit(next);
   }
 
@@ -155,6 +158,7 @@ export function ResidueBoard({
       const to = next[over.index] ?? null;
       next[source.index] = to;
       next[over.index] = from;
+      playSound("fill");
       commit(next);
       return;
     }

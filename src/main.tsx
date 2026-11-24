@@ -1,6 +1,7 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { App } from "./app/App.tsx";
+import { installButtonSound } from "./audio/buttonSound.ts";
 import { aminoAcids } from "./data/aminoAcids.ts";
 import { briefings } from "./data/briefings.ts";
 import { practiceProblems, practiceStages } from "./data/practice.ts";
@@ -15,6 +16,8 @@ assertPlayable(practiceProblems, practiceStages, aminoAcids, [], false);
 
 const root = document.getElementById("root");
 if (!root) throw new Error("root が見つかりません");
+
+installButtonSound();
 
 createRoot(root).render(
   <StrictMode>

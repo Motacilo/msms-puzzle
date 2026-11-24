@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { playSound } from "../audio/sound.ts";
 import { aminoAcids } from "../data/aminoAcids.ts";
 import { briefings } from "../data/briefings.ts";
 import { practiceProblems, practiceStages } from "../data/practice.ts";
@@ -51,7 +52,11 @@ export function App() {
 
   // 画面が変わったら、いちばん上から見せる（下のほうで回答しても、結果の演出が見えるように）。
   const routeKey =
-    route.name === "home" ? "home" : route.name === "briefing" ? route.briefingId : `${route.name}:${route.problemId}`;
+    route.name === "home" || route.name === "licenses"
+      ? route.name
+      : route.name === "briefing"
+        ? route.briefingId
+        : `${route.name}:${route.problemId}`;
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [routeKey]);
@@ -91,9 +96,12 @@ export function App() {
     const draft = drafts[problemId] ?? emptyDraft();
     const judgment = assessAnswer(problem, draft);
     if (judgment.status === "incomplete") {
+      // 回答するボタンは自分で音を決める。判定に進めないときは、ふつうのボタンの音。
+      playSound("button");
       setNotice(judgment.message);
       return;
     }
+    playSound(judgment.status === "correct" ? "correct" : "incorrect");
     const clearedProblemIds = progress.clearedProblemIds.includes(problemId)
       ? progress.clearedProblemIds
       : [...progress.clearedProblemIds, problemId];
