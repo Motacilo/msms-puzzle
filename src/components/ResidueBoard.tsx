@@ -145,7 +145,7 @@ export function ResidueBoard({
     if (index < 0 || index >= next.length) return;
     next[index] = next[index] === code ? null : code;
     // 枠にアミノ酸が入ったとき（同じアミノ酸を合わせて空にしたときは鳴らさない）。
-    if (next[index] !== null) playSound("fill");
+    playSound(next[index] !== null ? "fill" : "delete");
     commit(next);
   }
 
@@ -299,6 +299,7 @@ export function ResidueBoard({
       setSelection(null);
       return;
     }
+    playSound("select");
     setSelection({ kind: "slot", index });
   }
 
@@ -313,6 +314,7 @@ export function ResidueBoard({
       writeAt(selection.index, code);
       return;
     }
+    playSound("select");
     setSelection({ kind: "acid", key, code });
   }
 
@@ -333,6 +335,8 @@ export function ResidueBoard({
 
   function removeSlot(index: number) {
     if (blockMinus.current) return;
+    // 「−」は data-se="none"。アミノ酸が入った枠を消すときは消す音、空の枠はふつうのボタンの音。
+    playSound(slots[index] ? "delete" : "button");
     setPrompt(null);
     setSelection((current) => {
       if (current?.kind !== "slot") return current;
@@ -349,9 +353,11 @@ export function ResidueBoard({
     if (!hasCodes) return;
     setPrompt(null);
     if (!trashArmed) {
+      playSound("button");
       setTrashArmed(true);
       return;
     }
+    playSound("delete");
     setTrashArmed(false);
     setSelection(null);
     commit(slots.map(() => null));
@@ -395,6 +401,7 @@ export function ResidueBoard({
                 ? "もう一度押すと、入れたアミノ酸をすべて消します"
                 : "入れたアミノ酸をすべて消す（2回続けて押します）"
             }
+            data-se="none"
             onClick={onTrash}
           >
             <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -482,7 +489,7 @@ function Slot({
       </button>
       {prompt ? (
         <span className="remove-bubble" data-keep-selection="">
-          <button type="button" aria-label="この枠を消す" data-keep-selection="" onClick={onRemove}>
+          <button type="button" aria-label="この枠を消す" data-se="none" data-keep-selection="" onClick={onRemove}>
             −
           </button>
         </span>

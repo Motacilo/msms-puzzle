@@ -1,17 +1,21 @@
 import buttonUrl from "../assets/se/決定ボタンを押す3.mp3";
 import fillUrl from "../assets/se/決定ボタンを押す44.mp3";
+import selectUrl from "../assets/se/決定ボタンを押す48.mp3";
+import deleteUrl from "../assets/se/決定ボタンを押す50.mp3";
 import correctUrl from "../assets/se/クイズ正解1.mp3";
 import incorrectUrl from "../assets/se/クイズ不正解1.mp3";
 
-export type SoundName = "button" | "fill" | "correct" | "incorrect";
+export type SoundName = "button" | "select" | "fill" | "delete" | "correct" | "incorrect";
 
 /**
  * 効果音の一覧。gain は、4つの音の聞こえる大きさ（LUFS）がそろうように決めた倍率。
- * button -23.5、fill -28.0、correct -14.6、incorrect -20.9 を、おおよそ -20〜-26 に寄せている。
+ * button -23.5、select -21.9、fill -28.0、correct -14.6、incorrect -20.9 を、おおよそ -20〜-26 に寄せている。
  */
 const SOUNDS: Record<SoundName, { url: string; gain: number }> = {
   button: { url: buttonUrl, gain: 1 },
+  select: { url: selectUrl, gain: 0.7 },
   fill: { url: fillUrl, gain: 1.3 },
+  delete: { url: deleteUrl, gain: 2.2 },
   correct: { url: correctUrl, gain: 0.55 },
   incorrect: { url: incorrectUrl, gain: 1 },
 };

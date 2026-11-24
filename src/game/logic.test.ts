@@ -4,10 +4,11 @@ import { trayCards } from "./tray.ts";
 import { briefings } from "../data/briefings.ts";
 import { problems } from "../data/problems.ts";
 import { stages } from "../data/stages.ts";
+import { answerFragments, explainedPeakIds } from "./answerFragments.ts";
 import { assessAnswer } from "./evaluateAnswer.ts";
 import { explainSolution } from "./explainSolution.ts";
 import { fragmentLabel } from "./labels.ts";
-import { buildPeptide } from "./fragments.ts";
+import { buildPeptide, selectPeaks } from "./fragments.ts";
 import { continueTarget, isProblemOpen, nextFlowId } from "./progression.ts";
 import { readShownPeaks } from "./readSequence.ts";
 import { validateAll } from "./validateProblem.ts";
@@ -421,5 +422,47 @@ describe("メモの表示", () => {
     expect(histidineOh.residues).toEqual(["H"]);
     expect(histidineOh.hydrogen).toBe(false);
     expect(fragmentLabel(histidineOh)).not.toBe(fragmentLabel(capsOnly));
+  });
+});
+
+describe("回答のかけら（結果画面の演出）", () => {
+  it("GAS を切ると、質量の小さい順に 58・106・129・177・234 になる", () => {
+    const fragments = answerFragments([..."GAS"], aminoAcids);
+    expect(fragments.map((fragment) => fragment.mass)).toEqual([58, 106, 129, 177, 234]);
+    expect(fragments.map((fragment) => fragment.id)).toEqual([
+      "left-1",
+      "right-1",
+      "left-2",
+      "right-2",
+      "intact",
+    ]);
+    const left2 = fragments.find((fragment) => fragment.id === "left-2");
+    expect([left2?.from, left2?.to]).toEqual([0, 2]);
+    const right2 = fragments.find((fragment) => fragment.id === "right-2");
+    expect([right2?.from, right2?.to]).toEqual([1, 3]);
+  });
+
+  it("L/I と K/Q のカードは、L と K として質量を数える", () => {
+    const card = answerFragments(["G", "L/I", "K/Q"], aminoAcids).map((fragment) => fragment.mass);
+    const letters = answerFragments([..."GLK"], aminoAcids).map((fragment) => fragment.mass);
+    expect(card).toEqual(letters);
+  });
+
+  it("練習問題は、正解の並びなら見えているピークがすべて説明でき、並びを入れ替えると説明しきれない", () => {
+    for (const problem of practiceProblems) {
+      if (problem.type !== "sequence-builder") continue;
+      const peaks = selectPeaks(buildPeptide(problem.sequence, aminoAcids).peaks, problem.shownPeakIds);
+      const explained = (codes: readonly string[]) =>
+        explainedPeakIds(answerFragments(codes, aminoAcids), peaks).size === peaks.length;
+
+      expect(explained([...problem.correctSequence]), problem.id).toBe(true);
+
+      const reversed = [...problem.correctSequence].reverse();
+      const sameReading = reversed.join("") === problem.correctSequence;
+      const judged = assessAnswer(problem, { choiceId: null, placed: reversed });
+      if (!sameReading && judged.status === "incorrect") {
+        expect(explained(reversed), problem.id).toBe(false);
+      }
+    }
   });
 });

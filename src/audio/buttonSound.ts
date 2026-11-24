@@ -2,7 +2,7 @@ import { playSound, unlockSound } from "./sound.ts";
 
 /**
  * ボタンの音を鳴らさないもの。
- * - アミノ酸のカードと枠は、ボタンとはみなさない。枠が埋まったときの音は、枠の側で鳴らす。
+ * - アミノ酸のカードと枠は、ボタンとはみなさない。選んだときの音と、枠が埋まったときの音は、枠の側（ResidueBoard）で鳴らす。
  * - data-se="none" を付けたボタンは、自分で音を決める（回答するボタンは、結果に応じて正解・不正解の音を鳴らす）。
  */
 const NO_BUTTON_SOUND = '[data-acid-key], [data-slot-index], [data-se="none"]';

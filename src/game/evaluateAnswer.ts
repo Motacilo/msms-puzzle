@@ -64,7 +64,7 @@ export function assessAnswer(problem: Problem, draft: AnswerDraft): Judgment {
 }
 
 /** 質量が同じ I/L と K/Q は区別できないので、どちらを置いても同じ答えとして扱う。 */
-function canonicalCode(code: string): string {
+export function canonicalCode(code: string): string {
   if (code === "L/I" || code === "I") return "L";
   if (code === "K/Q" || code === "Q") return "K";
   return code;

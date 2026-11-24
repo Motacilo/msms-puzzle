@@ -682,37 +682,57 @@ h2 {
 }
 
 /*
- * アミノ酸の色。性質ごとに色の系統を分け、その中で濃さと色相を少しずつ変える。
+ * アミノ酸の色。性質ごとに1色。
  * 疎水性＝青、芳香族＝紫、酸性＝緑、塩基性＝橙、そのほかの親水性＝桃。
  */
-[data-code="G"] { --aa: #4f93dc; }
-[data-code="A"] { --aa: #3a80d2; }
-[data-code="V"] { --aa: #2f6fc2; }
-[data-code="L"] { --aa: #2a5fae; }
-[data-code="I"] { --aa: #3a55a8; }
-[data-code="P"] { --aa: #2587b3; }
-[data-code="M"] { --aa: #1f4b84; }
-[data-code="F"] { --aa: #8d5ccb; }
-[data-code="Y"] { --aa: #a650bf; }
-[data-code="W"] { --aa: #6845a6; }
-[data-code="D"] { --aa: #2d9a57; }
-[data-code="E"] { --aa: #1c7f6b; }
-[data-code="K"] { --aa: #d6701a; }
-[data-code="R"] { --aa: #bd4f14; }
-[data-code="H"] { --aa: #b67a10; }
-[data-code="S"] { --aa: #df6396; }
-[data-code="T"] { --aa: #cf4c7c; }
-[data-code="N"] { --aa: #d45cb1; }
-[data-code="Q"] { --aa: #bd438c; }
-[data-code="C"] { --aa: #dc5a76; }
-/* 同じ質量の組は、2つの色を斜めに分けて見せる。 */
-[data-code="L/I"] {
-  --aa: #2a5fae;
-  --aa-bg: linear-gradient(135deg, #2a5fae 0 50%, #3a55a8 50% 100%);
+:root {
+  --aa-hydrophobic: #2f6fc2;
+  --aa-aromatic: #8d5ccb;
+  --aa-acidic: #2d9a57;
+  --aa-basic: #d6701a;
+  --aa-polar: #df6396;
 }
+
+[data-code="G"],
+[data-code="A"],
+[data-code="V"],
+[data-code="L"],
+[data-code="I"],
+[data-code="P"],
+[data-code="M"],
+[data-code="L/I"] {
+  --aa: var(--aa-hydrophobic);
+}
+
+[data-code="F"],
+[data-code="Y"],
+[data-code="W"] {
+  --aa: var(--aa-aromatic);
+}
+
+[data-code="D"],
+[data-code="E"] {
+  --aa: var(--aa-acidic);
+}
+
+[data-code="K"],
+[data-code="R"],
+[data-code="H"] {
+  --aa: var(--aa-basic);
+}
+
+[data-code="S"],
+[data-code="T"],
+[data-code="N"],
+[data-code="Q"],
+[data-code="C"] {
+  --aa: var(--aa-polar);
+}
+
+/* K と Q は性質が違うので、同じ質量の K/Q だけは橙と桃を斜めに分けて見せる。 */
 [data-code="K/Q"] {
-  --aa: #c85a4c;
-  --aa-bg: linear-gradient(135deg, #d6701a 0 50%, #bd438c 50% 100%);
+  --aa: var(--aa-basic);
+  --aa-bg: linear-gradient(135deg, var(--aa-basic) 0 50%, var(--aa-polar) 50% 100%);
 }
 
 .bead[data-code] {
@@ -1929,16 +1949,18 @@ h2 {
   background: var(--group);
 }
 
-.aa-legend [data-group="hydrophobic"] { --group: #2f6fc2; }
-.aa-legend [data-group="aromatic"] { --group: #8d5ccb; }
-.aa-legend [data-group="acidic"] { --group: #2d9a57; }
-.aa-legend [data-group="basic"] { --group: #d6701a; }
-.aa-legend [data-group="polar"] { --group: #df6396; }
+.aa-legend [data-group="hydrophobic"] { --group: var(--aa-hydrophobic); }
+.aa-legend [data-group="aromatic"] { --group: var(--aa-aromatic); }
+.aa-legend [data-group="acidic"] { --group: var(--aa-acidic); }
+.aa-legend [data-group="basic"] { --group: var(--aa-basic); }
+.aa-legend [data-group="polar"] { --group: var(--aa-polar); }
 
 /* ===== 正解の演出 ===== */
 .celebrate {
+  position: relative;
   margin-top: 0.6rem;
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .celebrate.is-done {
@@ -1949,27 +1971,136 @@ h2 {
   height: clamp(13rem, 36vh, 19rem);
 }
 
-.celebrate-chain {
+.celebrate .result-peptide {
   margin-bottom: 0.6rem;
 }
 
-.celebrate-chain .peptide-chain {
-  margin: 0.3rem 0 0.4rem;
+/* いま切り出しているところ。 */
+.celebrate .bead.is-observed {
+  outline: 3px solid #ffc93d;
+  outline-offset: 2px;
 }
 
-.celebrate-chain .bead[data-code] {
-  animation: bead-pop 0.38s cubic-bezier(0.3, 1.7, 0.5, 1) both;
+/* 飛んでいくかけら。位置は WebAnimations で動かす。 */
+.fly-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+  overflow: visible;
 }
 
-@keyframes bead-pop {
-  0% {
-    transform: scale(0.2) translateY(-0.6rem);
-    opacity: 0;
-  }
-  100% {
-    transform: none;
-    opacity: 1;
-  }
+.frag {
+  position: absolute;
+  left: 0;
+  top: 0;
+  opacity: 0;
+  display: grid;
+  justify-items: center;
+  gap: 0.15rem;
+  will-change: transform, opacity;
+}
+
+.frag-chain {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.12rem;
+  padding: 0.18rem;
+  border-radius: 0.6rem;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 0.2rem 0.6rem rgba(10, 40, 24, 0.28);
+}
+
+.frag .bead {
+  width: 1.5rem;
+  height: 1.5rem;
+  min-width: 1.5rem;
+  border-radius: 0.3rem;
+  font-size: 0.72rem;
+  padding: 0;
+}
+
+.frag .bead[data-code="L/I"],
+.frag .bead[data-code="K/Q"] {
+  width: auto;
+  min-width: 1.5rem;
+  padding: 0 0.15rem;
+  font-size: 0.55rem;
+}
+
+.frag .bead.is-cap {
+  width: 1.15rem;
+  height: 1.15rem;
+  min-width: 1.15rem;
+  font-size: 0.5rem;
+}
+
+.frag-mass {
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: var(--ink);
+  background: rgba(255, 255, 255, 0.92);
+  border-radius: 0.4rem;
+  padding: 0 0.3rem;
+}
+
+.skip-hint {
+  margin: 0.4rem 0 0;
+  text-align: center;
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+.skip-hint.is-hidden {
+  visibility: hidden;
+}
+
+.peak-hit.is-miss .peak-line {
+  width: 4px;
+  background: #e0453a;
+  box-shadow: 0 0 0.5rem rgba(224, 69, 58, 0.45);
+}
+
+.peak-mass.is-miss .peak-value {
+  color: #c42a22;
+}
+
+.miss-stamp {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+}
+
+.miss-stamp svg {
+  width: min(92%, 29rem);
+  height: auto;
+  overflow: visible;
+  filter: drop-shadow(0 0.55rem 0.7rem rgba(60, 10, 10, 0.32));
+  animation: miss-in 0.55s cubic-bezier(0.2, 1.4, 0.4, 1) both;
+}
+
+.miss-layer {
+  font: italic 900 150px "Arial Black", "Segoe UI Black", "Hiragino Sans", "Noto Sans JP", sans-serif;
+  text-anchor: middle;
+  paint-order: stroke;
+  stroke-linejoin: round;
+}
+
+.miss-layer.is-shadow { fill: #4a0f0b; stroke: #4a0f0b; stroke-width: 36; opacity: 0.45; }
+.miss-layer.is-outer { fill: #7a1d17; stroke: #7a1d17; stroke-width: 36; }
+.miss-layer.is-mid { fill: #ffffff; stroke: #ffffff; stroke-width: 17; }
+.miss-layer.is-fill { stroke: #8a1b14; stroke-width: 3; }
+
+@keyframes miss-in {
+  0% { transform: scale(2.2) rotate(8deg); opacity: 0; }
+  50% { transform: scale(0.95) rotate(4deg); opacity: 1; }
+  62% { transform: translateX(-0.5rem) rotate(4deg); }
+  74% { transform: translateX(0.5rem) rotate(4deg); }
+  86% { transform: translateX(-0.25rem) rotate(4deg); }
+  100% { transform: scale(1) rotate(4deg); opacity: 1; }
 }
 
 .peak-hit.is-lit .peak-line {
@@ -2146,9 +2277,9 @@ h2 {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .celebrate-chain .bead[data-code],
   .peak-hit.is-flash .peak-line,
   .clear-stamp svg,
+  .miss-stamp svg,
   .clear-spark,
   .next-big.is-clear {
     animation: none;
@@ -2514,4 +2645,13 @@ h2 {
 
 .license-page a {
   color: var(--accent-deep);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
 }

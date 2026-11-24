@@ -1,6 +1,5 @@
-import { ClearCelebration } from "../components/ClearCelebration.tsx";
 import { FeedbackPanel } from "../components/FeedbackPanel.tsx";
-import { PeptideChain } from "../components/PeptideChain.tsx";
+import { ResultStage } from "../components/ResultStage.tsx";
 import { explainSolution } from "../game/explainSolution.ts";
 import { residueLabel, sequenceLabel } from "../game/labels.ts";
 import {
@@ -14,6 +13,8 @@ type Props = {
   problem: Problem;
   acids: readonly AminoAcid[];
   judgment: Exclude<Judgment, { status: "incomplete" }>;
+  /** 回答した並び（並べて答える問題のとき、結果の演出に使う）。 */
+  answer: readonly string[];
   nextProblemId: string | null;
   nextIsBriefing?: boolean;
   onNext: () => void;
@@ -40,6 +41,7 @@ export function ResultScreen({
   problem,
   acids,
   judgment,
+  answer,
   nextProblemId,
   nextIsBriefing = false,
   onNext,
@@ -50,6 +52,7 @@ export function ResultScreen({
   const answerLabel = answerText(problem, judgment.answer, acids);
   const correctLabel = answerText(problem, judgment.correct, acids);
   const correct = judgment.status === "correct";
+  const staged = problem.type === "sequence-builder";
   const nextLabel = nextProblemId ? (nextIsBriefing ? "次の図へ" : "次の問題へ") : "ステージ選択へ";
 
   return (
@@ -60,18 +63,14 @@ export function ResultScreen({
         </button>
         <p className="eyebrow">{problem.title}</p>
       </div>
-      {correct ? (
-        <ClearCelebration key={problem.id} problem={problem} acids={acids} />
-      ) : problem.type === "sequence-builder" ? (
-        <div className="result-peptide">
-          <p className="terminus-note">正解のペプチド</p>
-          <PeptideChain
-            acids={acids}
-            residues={[...problem.correctSequence]}
-            hydrogen
-            hydroxyl
-          />
-        </div>
+      {problem.type === "sequence-builder" ? (
+        <ResultStage
+          key={`${problem.id}:${answer.join("|")}`}
+          problem={problem}
+          acids={acids}
+          answer={answer}
+          verdict={correct ? "correct" : "incorrect"}
+        />
       ) : null}
       <div className="next-row">
         <button
@@ -88,6 +87,7 @@ export function ResultScreen({
           </button>
         )}
       </div>
+      {staged ? null : (
       <FeedbackPanel
         judgment={judgment}
         answerLabel={answerLabel}
@@ -96,6 +96,8 @@ export function ResultScreen({
         explanation={problem.explanation}
         scienceNote={problem.scienceNote}
       />
+      )}
+      {staged ? null : (
       <div className="actions">
         {nextProblemId ? (
           <button type="button" className="primary" onClick={onNext}>
@@ -113,6 +115,7 @@ export function ResultScreen({
           ホーム
         </button>
       </div>
+      )}
     </main>
   );
 }

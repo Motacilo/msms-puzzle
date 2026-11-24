@@ -204,7 +204,7 @@ export function AnalysisScreen({
               {notice}
             </p>
           ) : null}
-          <button type="button" className="primary" data-se="none" onClick={onSubmit}>
+          <button type="button" className="primary" onClick={onSubmit}>
             回答する
           </button>
         </section>

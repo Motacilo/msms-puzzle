@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { playSound } from "../audio/sound.ts";
 import { aminoAcids } from "../data/aminoAcids.ts";
 import { briefings } from "../data/briefings.ts";
 import { practiceProblems, practiceStages } from "../data/practice.ts";
@@ -35,7 +34,7 @@ type Route =
   | { name: "licenses" }
   | { name: "briefing"; briefingId: string }
   | { name: "play"; problemId: string }
-  | { name: "result"; problemId: string; judgment: FinishedJudgment };
+  | { name: "result"; problemId: string; judgment: FinishedJudgment; answer: string[] };
 
 const allProblems = [...problems, ...practiceProblems];
 const allStages = [...stages, ...practiceStages];
@@ -96,12 +95,9 @@ export function App() {
     const draft = drafts[problemId] ?? emptyDraft();
     const judgment = assessAnswer(problem, draft);
     if (judgment.status === "incomplete") {
-      // 回答するボタンは自分で音を決める。判定に進めないときは、ふつうのボタンの音。
-      playSound("button");
       setNotice(judgment.message);
       return;
     }
-    playSound(judgment.status === "correct" ? "correct" : "incorrect");
     const clearedProblemIds = progress.clearedProblemIds.includes(problemId)
       ? progress.clearedProblemIds
       : [...progress.clearedProblemIds, problemId];
@@ -112,7 +108,7 @@ export function App() {
       savePracticeResults(next);
     }
     setNotice(null);
-    setRoute({ name: "result", problemId, judgment });
+    setRoute({ name: "result", problemId, judgment, answer: [...draft.placed] });
   }
 
   if (route.name === "licenses") {
@@ -181,6 +177,7 @@ export function App() {
         problem={problem}
         acids={aminoAcids}
         judgment={route.judgment}
+        answer={route.answer}
         nextProblemId={upcoming}
         nextIsBriefing={upcoming !== null && isBriefingId(stages, upcoming)}
         onNext={() => {

@@ -23,6 +23,8 @@ type Props = {
   litPeakIds?: readonly string[];
   /** 正解の演出で、いま光ったピーク。 */
   flashPeakIds?: readonly string[];
+  /** 結果画面で、かけらで説明できなかったピーク（赤く示す）。 */
+  missPeakIds?: readonly string[];
   /** 図の上に重ねるもの（正解の演出の文字など）。 */
   overlay?: ReactNode;
   /** 1回押して選択中のピーク（赤く表示する）。 */
@@ -61,6 +63,7 @@ export function PeakSpectrum({
   peakColors = {},
   litPeakIds = [],
   flashPeakIds = [],
+  missPeakIds = [],
   overlay,
   selectedPeakId = null,
   onSelectRange,
@@ -76,7 +79,7 @@ export function PeakSpectrum({
   const [rangeLayout, setRangeLayout] = useState<RangeLayout>(NO_RANGES);
   // メモが多くてラベルが図の上にはみ出すとき、その分だけ図の上に余白を足す。
   const [labelExtra, setLabelExtra] = useState(0);
-  const axisMax = axisMaxFor(Math.max(...peaks.map((peak) => peak.mass), 1));
+  const axisMax = spectrumAxisMax(peaks);
   const ticks = ticksFor(axisMax);
   const masses = [...peaks]
     .sort((a, b) => a.mass - b.mass)
@@ -150,6 +153,7 @@ export function PeakSpectrum({
               selectedPeakId === peak.id ? "is-selected" : "",
               litPeakIds.includes(peak.id) ? "is-lit" : "",
               flashPeakIds.includes(peak.id) ? "is-flash" : "",
+              missPeakIds.includes(peak.id) ? "is-miss" : "",
             ]
               .filter(Boolean)
               .join(" ");
@@ -208,6 +212,7 @@ export function PeakSpectrum({
               guided.has(peak.id) ? "is-guided" : "",
               selectedPeakId === peak.id ? "is-selected" : "",
               litPeakIds.includes(peak.id) ? "is-lit" : "",
+              missPeakIds.includes(peak.id) ? "is-miss" : "",
             ]
               .filter(Boolean)
               .join(" ");
@@ -428,6 +433,11 @@ function overlaps(a: Box, b: Box, pad: number): boolean {
     a.y < b.y + b.h + pad &&
     a.y + a.h + pad > b.y
   );
+}
+
+/** 図の右端の質量。結果画面で、かけらの行き先を決めるのにも使う。 */
+export function spectrumAxisMax(peaks: readonly Peak[]): number {
+  return axisMaxFor(Math.max(...peaks.map((peak) => peak.mass), 1));
 }
 
 function axisMaxFor(mass: number): number {
