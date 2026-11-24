@@ -66,6 +66,7 @@ export function ResultStage({ problem, acids, answer, verdict }: Props) {
     setFlash([]);
     setCut(null);
     setDone(true);
+    settle();
     if (!sounded.current) {
       sounded.current = true;
       playSound(verdict);
@@ -76,16 +77,54 @@ export function ResultStage({ problem, acids, answer, verdict }: Props) {
     timers.current.push(window.setTimeout(action, ms));
   }
 
+  /**
+   * 置いたかけらどうしが重ならないよう、近い位置のものは上へ積む段（0, 1, 2…）。
+   * 質量の小さい順（左から右）に、ぶつからない一番低い段を選ぶ。
+   */
+  function ranksFor(stage: HTMLElement): number[] {
+    const stageLeft = stage.getBoundingClientRect().left;
+    const placed: { x: number; rank: number }[] = [];
+    return fragments.map((_, index) => {
+      const id = matches[index]?.[0];
+      const label = id ? stage.querySelector(`.peak-mass[data-id="${id}"]`) : null;
+      if (!label) return 0;
+      const rect = label.getBoundingClientRect();
+      const x = rect.left + rect.width / 2 - stageLeft;
+      let rank = 0;
+      while (placed.some((item) => item.rank === rank && Math.abs(item.x - x) < 88)) rank += 1;
+      placed.push({ x, rank });
+      return rank;
+    });
+  }
+
+  /** 演出を飛ばしたとき。合ったかけらはピークの上に置き、合わなかったものは出さない。 */
+  function settle() {
+    const stage = stageRef.current;
+    if (!stage) return;
+    const ranks = ranksFor(stage);
+    fragments.forEach((fragment, index) => {
+      const pill = pillRefs.current[index];
+      const hit = matches[index] ?? [];
+      if (!pill) return;
+      pill.style.opacity = hit.length > 0 ? "1" : "0";
+      if (hit.length > 0) {
+        const point = targetPoint(stage, fragment, hit[0], axisMax, ranks[index] ?? 0);
+        pill.style.transform = `translate(${point.x}px, ${point.y}px) translate(-50%, -50%) scale(0.8)`;
+      }
+    });
+  }
+
   function launch(index: number) {
     const stage = stageRef.current;
     const pill = pillRefs.current[index];
     const fragment = fragments[index];
     if (!stage || !pill || !fragment) return;
     setCut(fragment);
+    playSound("whoosh");
 
     const source = sourcePoint(stage, fragment);
     const hit = matches[index] ?? [];
-    const target = targetPoint(stage, fragment, hit[0], axisMax);
+    const target = targetPoint(stage, fragment, hit[0], axisMax, ranksFor(stage)[index] ?? 0);
     const at = (point: Point, scale: number, turn = 0) =>
       `translate(${point.x}px, ${point.y}px) translate(-50%, -50%) scale(${scale}) rotate(${turn}deg)`;
 
@@ -94,7 +133,7 @@ export function ResultStage({ problem, acids, answer, verdict }: Props) {
         [
           { transform: at(source, 0.6), opacity: 0 },
           { transform: at(source, 1.12), opacity: 1, offset: 0.16, easing: "cubic-bezier(0.45, 0, 0.25, 1)" },
-          { transform: at(target, 0.82), opacity: 1 },
+          { transform: at(target, hit.length > 0 ? 0.8 : 0.82), opacity: 1 },
         ],
         { duration: FLIGHT_MS, fill: "forwards" },
       ),
@@ -102,18 +141,9 @@ export function ResultStage({ problem, acids, answer, verdict }: Props) {
 
     later(() => {
       if (hit.length > 0) {
-        // 合った：ピークに吸い込まれて、そのピークが光る。
+        // 合った：ピークの数字の上に残り、そのピークが光る。
         setLit((current) => [...new Set([...current, ...hit])]);
         setFlash(hit);
-        animations.current.push(
-          pill.animate(
-            [
-              { transform: at(target, 0.82), opacity: 1 },
-              { transform: at({ x: target.x, y: target.y + 10 }, 0.2), opacity: 0 },
-            ],
-            { duration: 200, fill: "forwards" },
-          ),
-        );
       } else {
         // 合わなかった：その場で消える。
         animations.current.push(
@@ -150,6 +180,7 @@ export function ResultStage({ problem, acids, answer, verdict }: Props) {
         if (!done) finish();
       }}
     >
+      <div className="verdict-slot">{done ? <VerdictStamp verdict={verdict} /> : null}</div>
       <div className="result-peptide">
         <p className="terminus-note">あなたの回答</p>
         <PeptideChain acids={acids} residues={answer} hydrogen hydroxyl observedIndexes={cutIndexes} />
@@ -160,7 +191,6 @@ export function ResultStage({ problem, acids, answer, verdict }: Props) {
         litPeakIds={lit}
         flashPeakIds={flash}
         missPeakIds={missIds}
-        overlay={done ? <VerdictStamp verdict={verdict} /> : null}
       />
       <div className="fly-layer" aria-hidden="true">
         {fragments.map((fragment, index) => (
@@ -232,6 +262,7 @@ function targetPoint(
   fragment: AnswerFragment,
   peakId: string | undefined,
   axisMax: number,
+  rank = 0,
 ): Point {
   const stageRect = stage.getBoundingClientRect();
   const plot = stage.querySelector(".spectrum-plot");
@@ -239,9 +270,21 @@ function targetPoint(
   const plotRect = plot.getBoundingClientRect();
   const ratio = Math.min(Math.max(fragment.mass / axisMax, 0), 1);
   const x = plotRect.left - stageRect.left + ratio * plotRect.width;
-  const line = peakId ? stage.querySelector(`.peak-line[data-id="${peakId}"]`) : null;
-  const y = line
-    ? line.getBoundingClientRect().top - stageRect.top - 16
-    : plotRect.top - stageRect.top + plotRect.height * 0.42;
-  return { x, y };
+  // 合うピークがあるときは、そのピークの数字のすぐ上。同じピークに複数合うときは、上へ積む。
+  const label = peakId ? stage.querySelector(`.peak-mass[data-id="${peakId}"]`) : null;
+  if (label) {
+    const labelRect = label.getBoundingClientRect();
+    const centerX = labelRect.left + labelRect.width / 2;
+    // 近くのピークの数字にも重ならないよう、近所でいちばん高い数字の上に置く。
+    let top = labelRect.top;
+    for (const near of stage.querySelectorAll(".peak-mass")) {
+      const rect = near.getBoundingClientRect();
+      if (Math.abs(rect.left + rect.width / 2 - centerX) < 60) top = Math.min(top, rect.top);
+    }
+    return {
+      x: centerX - stageRect.left,
+      y: top - stageRect.top - 30 - rank * 54,
+    };
+  }
+  return { x, y: plotRect.top - stageRect.top + plotRect.height * 0.42 };
 }

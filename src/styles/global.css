@@ -2655,3 +2655,31 @@ h2 {
   clip: rect(0 0 0 0);
   white-space: nowrap;
 }
+
+/* ===== 結果画面：判定の文字はスペクトルの上に出す ===== */
+.verdict-slot {
+  height: 7.2rem;
+  margin-bottom: 0.4rem;
+  display: grid;
+  place-items: center;
+}
+
+.verdict-slot .clear-stamp,
+.verdict-slot .miss-stamp {
+  position: relative;
+  inset: auto;
+  width: 100%;
+  height: 100%;
+}
+
+.verdict-slot .clear-stamp svg,
+.verdict-slot .miss-stamp svg {
+  width: auto;
+  height: 84%;
+  max-width: 100%;
+}
+
+/* ピークの数字の上に置いたかけらが、ペプチドに重ならないよう間をあける。 */
+.celebrate .result-peptide {
+  margin-bottom: 3.6rem;
+}

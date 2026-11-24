@@ -17,7 +17,8 @@ export function installButtonSound(): () => void {
     if (!control) return;
     if (control.matches(NO_BUTTON_SOUND)) return;
     if (control.getAttribute("aria-disabled") === "true") return;
-    playSound("button");
+    // 電卓のキーは、専用の音。
+    playSound(control.matches(".calc-key") ? "calc" : "button");
   };
   // 押した時点の状態で判断するため、画面が更新される前（キャプチャ段階）で受ける。
   document.addEventListener("pointerdown", onPointerDown, true);
